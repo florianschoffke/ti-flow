@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { Questionnaire, QuestionnaireItem, QuestionnaireResponse, Prescription } from '../types';
-import { TiFlowService } from '../services/tiFlowService';
+import type { Questionnaire, QuestionnaireItem, Prescription } from '../types';
+import { tiFlowService } from '../services/tiFlowService';
 
 interface QuestionnaireRendererProps {
   questionnaire: Questionnaire;
@@ -18,7 +18,7 @@ interface GroupInstance {
   [linkId: string]: string | { value: string; unit: string };
 }
 
-export function QuestionnaireRenderer({ questionnaire, prescription, onClose, onRequestSubmitted }: QuestionnaireRendererProps) {
+export function QuestionnaireRenderer({ questionnaire, prescription, operationCode, onClose, onRequestSubmitted }: QuestionnaireRendererProps) {
   const [formData, setFormData] = useState<FormData>(() => {
     // Pre-populate form with available data
     const initialData: FormData = {};
@@ -407,17 +407,9 @@ export function QuestionnaireRenderer({ questionnaire, prescription, onClose, on
           responseItems.push(groupItem);
         });
       });
+      console.log('📝 Submitting flow request with operation:', operationCode);
       
-      const questionnaireResponse: QuestionnaireResponse = {
-        resourceType: 'QuestionnaireResponse',
-        questionnaire: questionnaire.title,
-        status: 'completed',
-        item: responseItems
-      };
-
-      console.log('📝 Submitting questionnaire response:', questionnaireResponse);
-      
-      const result = await TiFlowService.submitFlowRequest(questionnaireResponse);
+      const result = await tiFlowService.submitFlowRequest(operationCode);
       console.log('✅ Flow request submitted successfully:', result);
       
       // Call the callback to refresh active requests list

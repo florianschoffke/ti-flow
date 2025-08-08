@@ -1,96 +1,176 @@
-import type { CodeSystem, Prescription, FHIRParameters, QuestionnaireResponse, ActiveRequest, RequestDetails } from '../types';
+import type {
+  CodeSystemConcept,
+  FHIRParameters,
+  Questionnaire,
+  ActiveRequest,
+  RequestDetails
+} from '../types';
 
-const API_BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'http://localhost:3001';
 
 export class TiFlowService {
-  static async getCodeSystem(): Promise<CodeSystem> {
-    const response = await fetch(`${API_BASE_URL}/$flow-operations`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch CodeSystem');
-    }
-    return response.json();
-  }
-
-  static async getRequestOperations(): Promise<CodeSystem> {
-    const response = await fetch(`${API_BASE_URL}/$request-operations`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch Request Operations CodeSystem');
-    }
-    return response.json();
-  }
-
-  static async populatePrescription(prescription: Prescription, operationCode: string): Promise<FHIRParameters> {
-    const response = await fetch(`${API_BASE_URL}/$populate`, {
-      method: 'POST',
+  private static async fetchWithAuth(url: string, options: RequestInit = {}) {
+    const response = await fetch(url, {
+      ...options,
       headers: {
         'Content-Type': 'application/json',
+        'x-actor-id': 'pharmacy-app',
+        ...options.headers,
       },
-      body: JSON.stringify({
-        prescription,
-        operationCode,
-        timestamp: new Date().toISOString()
-      }),
     });
-    
+
     if (!response.ok) {
-      throw new Error('Failed to populate prescription');
+      const errorText = await response.text();
+      console.error('API Error:', errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
-    
+
     return response.json();
   }
 
-  static async populateRequest(requestCode: string, pharmacyData?: any): Promise<FHIRParameters> {
-    const response = await fetch(`${API_BASE_URL}/$populate`, {
+  // Get available request operations
+  static async getRequestOperations(): Promise<{ concepts: CodeSystemConcept[] }> {
+    return this.fetchWithAuth(`${BASE_URL}/request-operations`);
+  }
+
+  // Populate a specific request form
+  static async populateRequest(operationCode: string): Promise<FHIRParameters> {
+    return this.fetchWithAuth(`${BASE_URL}/request-operations/${operationCode}/populate`);
+  }
+
+  // Submit a flow request (creates a Task)
+  static async submitFlowRequest(operationCode: string): Promise<any> {
+    return this.fetchWithAuth(`${BASE_URL}/\\$request`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
-        requestCode,
-        pharmacyData: pharmacyData || {
-          pharmacyName: 'Apotheke Musterapotheke',
-          pharmacyTID: '3-SMC-B-Testkarte-883110000116873'
-        },
-        timestamp: new Date().toISOString()
-      }),
+        requester: 'pharmacy-app',
+        receiver: 'doctor-app',
+        questionnaire: operationCode
+      })
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to populate request');
-    }
-    
-    return response.json();
   }
 
-  static async submitFlowRequest(questionnaireResponse: QuestionnaireResponse): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/$flow-request`, {
+  // Create a new flow request
+  static async createFlowRequest(operationCode: string): Promise<any> {
+    return this.submitFlowRequest(operationCode);
+  }
+
+  // Get a specific task
+  static async getTask(taskId: string): Promise<any> {
+    return this.fetchWithAuth(`${BASE_URL}/Task/${taskId}`);
+  }
+
+  // Accept a task
+  static async acceptTask(taskId: string): Promise<any> {
+    return this.fetchWithAuth(`${BASE_URL}/${taskId}/\\$accept`, {
+      method: 'POST'
+    });
+  }
+
+  // Reject a task
+  static async rejectTask(taskId: string): Promise<any> {
+    return this.fetchWithAuth(`${BASE_URL}/${taskId}/\\$reject`, {
+      method: 'POST'
+    });
+  }
+
+  // Submit counter offer
+  static async submitCounterOffer(taskId: string, questionnaire: Questionnaire): Promise<any> {
+    return this.fetchWithAuth(`${BASE_URL}/${taskId}/\\$counter-offer`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/fhir+json',
-      },
-      body: JSON.stringify(questionnaireResponse),
+      body: JSON.stringify({
+        resourceType: 'Parameters',
+        parameter: [
+          {
+            name: 'questionnaire',
+            resource: questionnaire
+          }
+        ]
+      })
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to submit flow request');
-    }
-    
-    return response.json();
   }
 
-  static async getActiveRequests(): Promise<{ total: number; requests: ActiveRequest[] }> {
-    const response = await fetch(`${API_BASE_URL}/$active-requests`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch active requests');
-    }
-    return response.json();
+  // Close a task
+  static async closeTask(taskId: string): Promise<any> {
+    return this.fetchWithAuth(`${BASE_URL}/${taskId}/\\$close`, {
+      method: 'POST'
+    });
   }
 
-  static async getRequestDetails(requestId: string): Promise<RequestDetails> {
-    const response = await fetch(`${API_BASE_URL}/$active-requests/${requestId}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch request details');
+  // Get active requests (from pharmacy perspective)
+  static async getActiveRequests(): Promise<{ requests: ActiveRequest[] }> {
+    try {
+      // For now, let's get tasks by requesting them individually since there's no bulk endpoint
+      // In a real implementation, you might have a search/filter endpoint
+      const activeRequests: ActiveRequest[] = [];
+      
+      // Try to get some recent tasks (this is a simplified approach)
+      for (let i = 1; i <= 10; i++) {
+        try {
+          const task = await this.getTask(i.toString());
+          if (task && task.requester?.reference === 'Organization/pharmacy-app') {
+            activeRequests.push({
+              id: task.id,
+              type: 'Request Operation', // We could map this from the questionnaire
+              kind: 'flow-request',
+              status: task.status,
+              requestDate: task.authoredOn || new Date().toISOString(),
+              lastUpdated: task.lastModified || task.authoredOn || new Date().toISOString()
+            });
+          }
+        } catch (error) {
+          // Task doesn't exist, continue
+          break;
+        }
+      }
+
+      return { requests: activeRequests };
+    } catch (error) {
+      console.error('Failed to get active requests:', error);
+      return { requests: [] };
     }
-    return response.json();
+  }
+
+  // Get request details with questionnaire response
+  static async getRequestDetails(requestId: string): Promise<RequestDetails | null> {
+    try {
+      const task = await this.getTask(requestId);
+      
+      // Extract questionnaire response from task input
+      const questionnaireInput = task.input?.find((input: any) => 
+        input.type?.coding?.[0]?.code === 'questionnaire-response'
+      );
+
+      if (!questionnaireInput?.valueReference?.reference) {
+        throw new Error('No questionnaire response found in task');
+      }
+
+      return {
+        id: task.id,
+        type: task.code?.coding?.[0]?.display || 'Unknown Request',
+        kind: task.code?.coding?.[0]?.code || 'unknown',
+        status: task.status,
+        requestDate: task.authoredOn || new Date().toISOString(),
+        lastUpdated: task.lastModified || task.authoredOn || new Date().toISOString(),
+        questionnaireResponse: questionnaireInput.valueReference.resource || {
+          resourceType: 'QuestionnaireResponse',
+          questionnaire: 'flow-request',
+          status: 'completed',
+          item: [
+            {
+              linkId: 'summary',
+              answer: [{ valueString: 'Request details' }]
+            }
+          ]
+        }
+      };
+    } catch (error) {
+      console.error('Failed to get request details:', error);
+      return null;
+    }
   }
 }
+
+// Export as both named and default export for compatibility
+export const tiFlowService = TiFlowService;
+export default TiFlowService;

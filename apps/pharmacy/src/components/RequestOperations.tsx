@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { CodeSystemConcept, Questionnaire, FHIRParameters } from '../types';
-import { TiFlowService } from '../services/tiFlowService';
+import { tiFlowService } from '../services/tiFlowService';
 import { QuestionnaireRenderer } from './QuestionnaireRenderer';
 
 interface RequestOperationsProps {
@@ -40,7 +40,7 @@ export function RequestOperations({ availableRequests, isLoading, onRequestSubmi
     
     try {
       console.log(`🔄 Executing request: ${request.display} (${request.code})`);
-      const result: FHIRParameters = await TiFlowService.populateRequest(request.code);
+      const result: FHIRParameters = await tiFlowService.populateRequest(request.code);
       console.log('✅ Request populated:', result);
       
       // Extract questionnaire from FHIR Parameters

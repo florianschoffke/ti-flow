@@ -1,0 +1,165 @@
+{
+  "tasks": {
+    "1": {
+      "id": "1",
+      "requester": "pharmacy-001",
+      "receiver": "doctor-001",
+      "created": "2025-08-08T10:45:01.058Z",
+      "updated": "2025-08-08T10:45:42.463Z",
+      "status": "accepted",
+      "owner": "pharmacy-001",
+      "questionnaireId": "1"
+    },
+    "2": {
+      "id": "2",
+      "requester": "pharmacy-002",
+      "receiver": "doctor-002",
+      "created": "2025-08-08T10:45:55.897Z",
+      "updated": "2025-08-08T10:46:05.892Z",
+      "status": "rejected",
+      "owner": "doctor-002",
+      "questionnaireId": "3"
+    },
+    "3": {
+      "id": "3",
+      "requester": "pharmacy-app",
+      "receiver": "doctor-app",
+      "created": "2025-08-08T11:05:55.751Z",
+      "updated": "2025-08-08T11:06:06.212Z",
+      "status": "accepted",
+      "owner": "doctor-app",
+      "questionnaireId": "4"
+    },
+    "4": {
+      "id": "4",
+      "requester": "pharmacy-app",
+      "receiver": "doctor-app",
+      "created": "2025-08-08T11:08:05.243Z",
+      "updated": "2025-08-08T11:08:44.629Z",
+      "status": "accepted",
+      "owner": "doctor-app",
+      "questionnaireId": "5"
+    }
+  },
+  "questionnaires": {
+    "1": {
+      "id": "1",
+      "title": "Prescription Request",
+      "description": "Request for prescription clarification",
+      "items": [
+        {
+          "linkId": "patient-name",
+          "text": "Patient Name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "linkId": "medication",
+          "text": "Medication",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "created": "2025-08-08T10:45:01.058Z"
+    },
+    "2": {
+      "id": "2",
+      "title": "Counter-offer for Prescription Request",
+      "description": "Modified prescription details",
+      "items": [
+        {
+          "linkId": "patient-name",
+          "text": "Patient Name",
+          "type": "string",
+          "required": true,
+          "initial": [
+            {
+              "valueString": "John Doe"
+            }
+          ]
+        },
+        {
+          "linkId": "medication",
+          "text": "Medication",
+          "type": "string",
+          "required": true,
+          "initial": [
+            {
+              "valueString": "Alternative Medicine"
+            }
+          ]
+        },
+        {
+          "linkId": "dosage",
+          "text": "Dosage",
+          "type": "string",
+          "required": true,
+          "initial": [
+            {
+              "valueString": "2x daily"
+            }
+          ]
+        }
+      ],
+      "created": "2025-08-08T10:45:22.046Z"
+    },
+    "3": {
+      "id": "3",
+      "title": "Another Prescription Request",
+      "description": "Request for urgent prescription",
+      "items": [
+        {
+          "linkId": "urgency",
+          "text": "Urgency Level",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "created": "2025-08-08T10:45:55.897Z"
+    },
+    "4": {
+      "0": "r",
+      "1": "e",
+      "2": "z",
+      "3": "e",
+      "4": "p",
+      "5": "t",
+      "6": "a",
+      "7": "n",
+      "8": "f",
+      "9": "o",
+      "10": "r",
+      "11": "d",
+      "12": "e",
+      "13": "r",
+      "14": "u",
+      "15": "n",
+      "16": "g",
+      "id": "4",
+      "created": "2025-08-08T11:05:55.751Z"
+    },
+    "5": {
+      "0": "r",
+      "1": "e",
+      "2": "z",
+      "3": "e",
+      "4": "p",
+      "5": "t",
+      "6": "a",
+      "7": "n",
+      "8": "f",
+      "9": "o",
+      "10": "r",
+      "11": "d",
+      "12": "e",
+      "13": "r",
+      "14": "u",
+      "15": "n",
+      "16": "g",
+      "id": "5",
+      "created": "2025-08-08T11:08:05.243Z"
+    }
+  },
+  "nextTaskId": 5,
+  "nextQuestionnaireId": 6
+}

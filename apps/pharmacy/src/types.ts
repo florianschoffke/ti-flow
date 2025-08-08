@@ -101,3 +101,46 @@ export interface ActiveRequest {
 export interface RequestDetails extends ActiveRequest {
   questionnaireResponse: QuestionnaireResponse;
 }
+
+// Flow service types
+export interface FlowTask {
+  resourceType: 'Task';
+  id: string;
+  status: string;
+  businessStatus: {
+    text: string;
+  };
+  intent: string;
+  priority: string;
+  description: string;
+  authoredOn: string;
+  lastModified: string;
+  requester: {
+    reference: string;
+  };
+  owner: {
+    reference: string;
+  };
+  for: {
+    reference: string;
+  };
+  input: Array<{
+    type: {
+      text: string;
+    };
+    valueReference: {
+      reference: string;
+    };
+  }>;
+}
+
+export interface FlowQuestionnaire {
+  resourceType: 'Questionnaire';
+  id: string;
+  status: string;
+  date: string;
+  title: string;
+  description?: string;
+  items: QuestionnaireItem[];
+  created?: string;
+}
