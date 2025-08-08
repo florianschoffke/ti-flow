@@ -1,0 +1,25 @@
+{
+  "resourceType": "CodeSystem",
+  "status": "draft",
+  "content": "complete",
+  "name": "FlowRequestsCS",
+  "id": "flow-requests-cs",
+  "title": "Flow Requests CS",
+  "version": "0.1.0",
+  "url": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/flow-requests-cs",
+  "concept": [
+    {
+      "code": "btm_notfall",
+      "display": "Ausstellung einer Verordnung für Notfallanforderung eines Betäubungsmittels"
+    },
+    {
+      "code": "rezeptanforderung",
+      "display": "Anforderung eines Rezeptes"
+    },
+    {
+      "code": "zytostatika",
+      "display": "Anforderung eines E-Rezeptes für eine anwendungsfertige Zytostatikazubereitung"
+    }
+  ],
+  "count": 4
+}

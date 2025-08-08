@@ -1,0 +1,86 @@
+{
+  "resourceType": "Questionnaire",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/4.0/StructureDefinition/Questionnaire"
+    ]
+  },
+  "title": "Korrektur eines Muster 16",
+  "status": "draft",
+  "code": [
+    {
+      "system": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/flow-operation-forms-cs",
+      "code": "e16A_Korrektur",
+      "display": "Korrektur eines Muster 16"
+    }
+  ],
+  "item": [
+    {
+      "type": "string",
+      "linkId": "744113603020",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "patient_name"
+        }
+      ],
+      "text": "Name des Patienten"
+    },
+    {
+      "type": "string",
+      "linkId": "126520044506",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "requester_name"
+        }
+      ],
+      "text": "Name des Anfragenden"
+    },
+    {
+      "type": "string",
+      "linkId": "505738877644",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "requester_tid"
+        }
+      ],
+      "text": "Telematik ID des Anfragenden"
+    },
+    {
+      "type": "string",
+      "linkId": "180853824562",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "prescription_id"
+        }
+      ],
+      "text": "Betreffendes Rezept"
+    },
+    {
+      "type": "string",
+      "linkId": "986476636160",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "prescription_secret"
+        }
+      ],
+      "text": "Secret für das Rezept"
+    },
+    {
+      "type": "text",
+      "linkId": "639744786988",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "change_request"
+        }
+      ],
+      "text": "Änderungswunsch",
+      "repeats": true
+    }
+  ]
+}

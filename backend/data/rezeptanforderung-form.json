@@ -1,0 +1,118 @@
+{
+  "resourceType": "Questionnaire",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/4.0/StructureDefinition/Questionnaire"
+    ]
+  },
+  "title": "Rezeptanforderung Muster 16",
+  "status": "draft",
+  "code": [
+    {
+      "system": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/flow-requests-cs",
+      "code": "rezeptanforderung",
+      "display": "Rezeptanforderung eines Muster 16"
+    }
+  ],
+  "item": [
+    {
+      "type": "string",
+      "linkId": "744113603020",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "patient_name"
+        }
+      ],
+      "text": "Name des Patienten",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "579806732389",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "patient_mrn"
+        }
+      ],
+      "text": "Verischerungsnummer",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "126520044506",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "requester_name"
+        }
+      ],
+      "text": "Name des Anfragenden",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "505738877644",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "requester_tid"
+        }
+      ],
+      "text": "Telematik ID des Anfragenden",
+      "required": true
+    },
+    {
+      "item": [
+        {
+          "type": "integer",
+          "linkId": "162012817157",
+          "text": "PZN"
+        },
+        {
+          "type": "choice",
+          "linkId": "403390148312",
+          "text": "Wirkstoff",
+          "item": [
+            {
+              "linkId": "403390148312_helpText",
+              "type": "display",
+              "text": "ASK Codes",
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "system": "http://hl7.org/fhir/questionnaire-item-control",
+                        "code": "help",
+                        "display": "Help-Button"
+                      }
+                    ],
+                    "text": "Help-Button"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "quantity",
+          "linkId": "677102290290",
+          "text": "Menge"
+        }
+      ],
+      "type": "group",
+      "linkId": "639744786988",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "rx_request"
+        }
+      ],
+      "text": "Rezeptwunsch",
+      "repeats": true
+    }
+  ]
+}

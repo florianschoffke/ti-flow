@@ -1,0 +1,63 @@
+{
+  "resourceType": "Questionnaire",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/4.0/StructureDefinition/Questionnaire"
+    ]
+  },
+  "title": "Wiederausstellung eines Muster 16",
+  "status": "draft",
+  "code": [
+    {
+      "system": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/flow-operation-forms-cs",
+      "code": "e16A_wiederverordnung",
+      "display": "Wiederausstellung eines Muster 16"
+    }
+  ],
+  "item": [
+    {
+      "type": "string",
+      "linkId": "pat_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "patient_name"
+        }
+      ],
+      "text": "Name des Patienten"
+    },
+    {
+      "type": "string",
+      "linkId": "req_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "requester_name"
+        }
+      ],
+      "text": "Name des Anfragenden"
+    },
+    {
+      "type": "string",
+      "linkId": "orig_prescription",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "original_prescription_id"
+        }
+      ],
+      "text": "Original Rezept-ID"
+    },
+    {
+      "type": "text",
+      "linkId": "reason",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "reissue_reason"
+        }
+      ],
+      "text": "Grund für Wiederausstellung"
+    }
+  ]
+}

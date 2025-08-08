@@ -1,0 +1,41 @@
+{
+  "resourceType": "CodeSystem",
+  "status": "draft",
+  "content": "complete",
+  "name": "FlowOperationFormsCS",
+  "id": "flow-operation-forms-cs",
+  "title": "Flow Operation Forms CS",
+  "version": "0.1.0",
+  "url": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/flow-operation-forms-cs",
+  "concept": [
+    {
+      "code": "e16A",
+      "display": "Muster 16",
+      "concept": [
+        {
+          "code": "e16A_korrektur",
+          "display": "Korrektur eines Muster 16"
+        },
+        {
+          "code": "e16A_wiederverordnung",
+          "display": "Wiederausstellung eines Muster 16"
+        }
+      ]
+    },
+    {
+      "code": "e16D",
+      "display": "Muster 16D"
+    },
+    {
+      "code": "arztbrief",
+      "display": "Arztbrief",
+      "concept": [
+        {
+          "code": "arztbrief_korrektur",
+          "display": "Korrektur eines Arztbriefes"
+        }
+      ]
+    }
+  ],
+  "count": 6
+}
