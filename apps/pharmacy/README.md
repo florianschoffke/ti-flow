@@ -64,8 +64,8 @@ npm run build
 The pharmacy system integrates with the backend service via:
 
 - `GET /prescriptions` - Load prescription data
-- `GET /$request-operations` - Get available operations
-- `POST /$populate` - Populate questionnaire forms
+- `GET /$request-operations` - Get available request operations
+- `GET /$document-operations` - Get available document operations
 - `POST /$flow-request` - Submit requests
 - `GET /$active-requests` - List active requests
 

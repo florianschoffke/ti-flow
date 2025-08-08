@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import type { CodeSystemConcept, Questionnaire, FHIRParameters } from '../types';
-import { tiFlowService } from '../services/tiFlowService';
+import type { CodeSystemConcept, Questionnaire } from '../types';
 import { QuestionnaireRenderer } from './QuestionnaireRenderer';
 
 interface RequestOperationsProps {
@@ -40,18 +39,31 @@ export function RequestOperations({ availableRequests, isLoading, onRequestSubmi
     
     try {
       console.log(`🔄 Executing request: ${request.display} (${request.code})`);
-      const result: FHIRParameters = await tiFlowService.populateRequest(request.code);
-      console.log('✅ Request populated:', result);
       
-      // Extract questionnaire from FHIR Parameters
-      const questionnaireParam = result.parameter?.find(p => p.name === 'questionnaire');
-      if (questionnaireParam?.resource) {
-        setCurrentQuestionnaire(questionnaireParam.resource as Questionnaire);
-        setCurrentRequestCode(request.code);
-        setShowQuestionnaire(true);
-      } else {
-        console.error('No questionnaire found in response');
-      }
+      // Create a basic questionnaire for this request type
+      const questionnaire: Questionnaire = {
+        resourceType: 'Questionnaire',
+        title: request.display || request.code,
+        status: 'active',
+        item: [
+          {
+            linkId: 'description',
+            text: 'Beschreibung der Anfrage',
+            type: 'text',
+            required: false
+          },
+          {
+            linkId: 'priority',
+            text: 'Priorität',
+            type: 'choice',
+            required: true
+          }
+        ]
+      };
+      
+      setCurrentQuestionnaire(questionnaire);
+      setCurrentRequestCode(request.code);
+      setShowQuestionnaire(true);
       
     } catch (error) {
       console.error('❌ Request failed:', error);

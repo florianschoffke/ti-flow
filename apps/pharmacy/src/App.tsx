@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { Patient, Prescription, CodeSystem, CodeSystemConcept } from './types'
+import type { Patient, Prescription, CodeSystemConcept } from './types'
 import { mockPatient, mockPrescriptions } from './mockData'
 import { PatientInfo } from './components/PatientInfo'
 import { PrescriptionList } from './components/PrescriptionList'
@@ -11,9 +11,6 @@ import './App.css'
 function App() {
   const [patient, setPatient] = useState<Patient | null>(null)
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
-  const [codeSystem, setCodeSystem] = useState<CodeSystem | null>(null)
-  const [availableOperations, setAvailableOperations] = useState<CodeSystemConcept[]>([])
-  const [requestCodeSystem, setRequestCodeSystem] = useState<CodeSystem | null>(null)
   const [availableRequests, setAvailableRequests] = useState<CodeSystemConcept[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingRequests, setIsLoadingRequests] = useState(false)
@@ -24,16 +21,10 @@ function App() {
   useEffect(() => {
     const loadCodeSystems = async () => {
       try {
-        // Load flow operations CodeSystem
-        const cs = await TiFlowService.getCodeSystem()
-        setCodeSystem(cs)
-        setAvailableOperations(cs.concept || [])
-        
         // Load request operations CodeSystem
         setIsLoadingRequests(true)
         const requestCs = await TiFlowService.getRequestOperations()
-        setRequestCodeSystem(requestCs)
-        setAvailableRequests(requestCs.concept || [])
+        setAvailableRequests(requestCs.concepts || [])
         setIsLoadingRequests(false)
         
         setCodeSystemError(null)
@@ -92,12 +83,6 @@ function App() {
               onRequestSubmitted={handleRequestSubmitted}
             />
           </div>
-          
-          {codeSystem && (
-            <div className="codesystem-info">
-              📋 Geladenes CodeSystem: {codeSystem.title} (v{codeSystem.version})
-            </div>
-          )}
         </div>
 
         <div className="content-section">
@@ -111,7 +96,7 @@ function App() {
           <div className="right-column">
             <PrescriptionList 
               prescriptions={prescriptions} 
-              availableOperations={availableOperations}
+              availableOperations={availableRequests}
               onRequestSubmitted={handleRequestSubmitted}
             />
           </div>

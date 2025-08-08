@@ -1,5 +1,6 @@
 import type {
   CodeSystemConcept,
+  FHIRParameters,
   Questionnaire,
   ActiveRequest,
   RequestDetails
@@ -29,7 +30,7 @@ export class TiFlowService {
 
   // Get available request operations
   static async getRequestOperations(): Promise<{ concepts: CodeSystemConcept[] }> {
-    const response = await this.fetchWithAuth(`${BASE_URL}/$request-operations`);
+    const response = await this.fetchWithAuth(`${BASE_URL}/\\$request-operations`);
     return {
       concepts: response.concept || []
     };
@@ -37,15 +38,20 @@ export class TiFlowService {
 
   // Get available document operations  
   static async getDocumentOperations(): Promise<{ concepts: CodeSystemConcept[] }> {
-    const response = await this.fetchWithAuth(`${BASE_URL}/$document-operations`);
+    const response = await this.fetchWithAuth(`${BASE_URL}/\\$document-operations`);
     return {
       concepts: response.concept || []
     };
   }
 
+  // Populate a specific request form
+  static async populateRequest(operationCode: string): Promise<FHIRParameters> {
+    return this.fetchWithAuth(`${BASE_URL}/$request-operations/${operationCode}/populate`);
+  }
+
   // Submit a flow request (creates a Task)
   static async submitFlowRequest(operationCode: string): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/$request`, {
+    return this.fetchWithAuth(`${BASE_URL}/\\$request`, {
       method: 'POST',
       body: JSON.stringify({
         requester: 'pharmacy-app',
@@ -67,21 +73,21 @@ export class TiFlowService {
 
   // Accept a task
   static async acceptTask(taskId: string): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/${taskId}/$accept`, {
+    return this.fetchWithAuth(`${BASE_URL}/${taskId}/\\$accept`, {
       method: 'POST'
     });
   }
 
   // Reject a task
   static async rejectTask(taskId: string): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/${taskId}/$reject`, {
+    return this.fetchWithAuth(`${BASE_URL}/${taskId}/\\$reject`, {
       method: 'POST'
     });
   }
 
   // Submit counter offer
   static async submitCounterOffer(taskId: string, questionnaire: Questionnaire): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/${taskId}/$counter-offer`, {
+    return this.fetchWithAuth(`${BASE_URL}/${taskId}/\\$counter-offer`, {
       method: 'POST',
       body: JSON.stringify({
         resourceType: 'Parameters',
@@ -97,7 +103,7 @@ export class TiFlowService {
 
   // Close a task
   static async closeTask(taskId: string): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/${taskId}/$close`, {
+    return this.fetchWithAuth(`${BASE_URL}/${taskId}/\\$close`, {
       method: 'POST'
     });
   }

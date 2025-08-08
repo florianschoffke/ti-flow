@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import type { CodeSystemConcept, Prescription, Questionnaire, FHIRParameters } from '../types';
-import { TiFlowService } from '../services/tiFlowService';
+import type { CodeSystemConcept, Prescription, Questionnaire } from '../types';
 import { QuestionnaireRenderer } from './QuestionnaireRenderer';
 
 interface FlowOperationsDropdownProps {
@@ -40,18 +39,37 @@ export function FlowOperationsDropdown({ prescription, availableOperations, onRe
     
     try {
       console.log(`🔄 Executing operation: ${operation.display} for prescription ${prescription.id}`);
-      const result: FHIRParameters = await TiFlowService.populatePrescription(prescription, operation.code);
-      console.log('✅ Operation completed:', result);
       
-      // Extract questionnaire from FHIR Parameters
-      const questionnaireParam = result.parameter?.find(p => p.name === 'questionnaire');
-      if (questionnaireParam?.resource) {
-        setCurrentQuestionnaire(questionnaireParam.resource as Questionnaire);
-        setCurrentOperationCode(operation.code);
-        setShowQuestionnaire(true);
-      } else {
-        console.error('No questionnaire found in response');
-      }
+      // Create a basic questionnaire for this document operation
+      const questionnaire: Questionnaire = {
+        resourceType: 'Questionnaire',
+        title: operation.display || operation.code,
+        status: 'active',
+        item: [
+          {
+            linkId: 'prescription-id',
+            text: 'Rezept-ID',
+            type: 'string',
+            required: true
+          },
+          {
+            linkId: 'patient-id',
+            text: 'Patient-ID',
+            type: 'string',
+            required: true
+          },
+          {
+            linkId: 'description',
+            text: 'Beschreibung',
+            type: 'text',
+            required: false
+          }
+        ]
+      };
+      
+      setCurrentQuestionnaire(questionnaire);
+      setCurrentOperationCode(operation.code);
+      setShowQuestionnaire(true);
       
     } catch (error) {
       console.error('❌ Operation failed:', error);
