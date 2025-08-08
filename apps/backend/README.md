@@ -1,13 +1,14 @@
-# TI-Flow Service
+# TI-Flow Backend Service
 
-Backend service for the TI-Flow POC pharmacy application.
+A FHIR R4-compliant backend service providing healthcare workflow APIs for pharmacy and doctor systems.
 
 ## Features
 
-- RESTful API for FHIR operations
-- Static FHIR CodeSystem serving
-- CORS enabled for frontend integration
-- Health check endpoint
+- 🔌 **FHIR R4 Compliance** - Standards-based healthcare data exchange
+- 📊 **Request Processing** - Handle pharmacy and doctor workflows
+- 💾 **Data Management** - In-memory storage with extensible architecture
+- 🌐 **CORS Support** - Cross-origin support for web applications
+- 🔄 **Real-time Updates** - Live request tracking and status updates
 
 ## Endpoints
 

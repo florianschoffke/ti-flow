@@ -1,29 +1,27 @@
 {
-  "name": "ti-flow",
+  "name": "ti-flow-monorepo",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
+  "description": "TI-Flow Healthcare Systems - Pharmacy, Doctor, and Backend Services",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:pharmacy\" \"npm run dev:doctor\"",
+    "dev:pharmacy": "cd apps/pharmacy && npm run dev",
+    "dev:doctor": "cd apps/doctor && npm run dev",
+    "dev:backend": "cd apps/backend && npm run dev",
+    "build": "npm run build:pharmacy && npm run build:doctor",
+    "build:pharmacy": "cd apps/pharmacy && npm run build",
+    "build:doctor": "cd apps/doctor && npm run build",
+    "install:all": "npm install && cd apps/pharmacy && npm install && cd ../doctor && npm install && cd ../backend && npm install",
+    "clean": "rm -rf apps/*/node_modules apps/*/dist node_modules",
+    "start": "concurrently \"npm run start:backend\" \"npm run preview:pharmacy\" \"npm run preview:doctor\"",
+    "start:backend": "cd apps/backend && npm start",
+    "preview:pharmacy": "cd apps/pharmacy && npm run preview",
+    "preview:doctor": "cd apps/doctor && npm run preview"
   },
   "devDependencies": {
-    "@eslint/js": "^9.32.0",
-    "@types/react": "^19.1.9",
-    "@types/react-dom": "^19.1.7",
-    "@vitejs/plugin-react": "^4.7.0",
-    "eslint": "^9.32.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.3.0",
-    "typescript": "~5.8.3",
-    "typescript-eslint": "^8.39.0",
-    "vite": "^7.1.0"
-  }
+    "concurrently": "^8.2.2"
+  },
+  "workspaces": [
+    "apps/*"
+  ]
 }

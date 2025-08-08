@@ -1,5 +1,5 @@
 {
-  "name": "ti-flow-service",
+  "name": "@ti-flow/backend",
   "version": "1.0.0",
   "description": "TI-Flow backend service for FHIR operations",
   "main": "server.js",
