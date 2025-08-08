@@ -1,0 +1,177 @@
+{
+  "resourceType": "Questionnaire",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/4.0/StructureDefinition/Questionnaire"
+    ]
+  },
+  "title": "Anforderung eines Rezeptes",
+  "status": "draft",
+  "code": [
+    {
+      "system": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/request-operations-cs",
+      "code": "rezeptanforderung",
+      "display": "Anforderung eines Rezeptes"
+    }
+  ],
+  "item": [
+    {
+      "type": "string",
+      "linkId": "patient_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "code": "patient_name"
+        }
+      ],
+      "text": "Name des Patienten",
+      "required": true
+    },
+    {
+      "type": "date",
+      "linkId": "patient_birthdate",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "code": "patient_birthdate"
+        }
+      ],
+      "text": "Geburtsdatum des Patienten",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "patient_insurance_number",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "code": "patient_insurance_number"
+        }
+      ],
+      "text": "Versichertennummer",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "requester_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "code": "requester_name"
+        }
+      ],
+      "text": "Name des anfragenden Arztes/Apothekers",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "requester_tid",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "code": "requester_tid"
+        }
+      ],
+      "text": "Telematik-ID des Anfragenden",
+      "required": true
+    },
+    {
+      "type": "choice",
+      "linkId": "prescription_type",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "code": "prescription_type"
+        }
+      ],
+      "text": "Art des angeforderten Rezeptes",
+      "required": true,
+      "answerOption": [
+        {
+          "valueCoding": {
+            "code": "medication",
+            "display": "Arzneimittelverordnung"
+          }
+        },
+        {
+          "valueCoding": {
+            "code": "medical_device",
+            "display": "Hilfsmittelverordnung"
+          }
+        },
+        {
+          "valueCoding": {
+            "code": "therapy",
+            "display": "Heilmittelverordnung"
+          }
+        }
+      ]
+    },
+    {
+      "type": "string",
+      "linkId": "medication_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "code": "medication_name"
+        }
+      ],
+      "text": "Name des Medikaments/der Verordnung"
+    },
+    {
+      "type": "text",
+      "linkId": "medical_indication",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "code": "medical_indication"
+        }
+      ],
+      "text": "Medizinische Indikation",
+      "required": true
+    },
+    {
+      "type": "choice",
+      "linkId": "urgency_level",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "code": "urgency_level"
+        }
+      ],
+      "text": "Dringlichkeit",
+      "required": true,
+      "answerOption": [
+        {
+          "valueCoding": {
+            "code": "routine",
+            "display": "Routine"
+          }
+        },
+        {
+          "valueCoding": {
+            "code": "urgent",
+            "display": "Dringend"
+          }
+        },
+        {
+          "valueCoding": {
+            "code": "emergency",
+            "display": "Notfall"
+          }
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "linkId": "additional_notes",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "code": "additional_notes"
+        }
+      ],
+      "text": "Zusätzliche Anmerkungen"
+    }
+  ]
+}

@@ -90,6 +90,53 @@ class InformationService {
   }
 
   /**
+   * Validate RequestOperationsCS forms structure
+   * @returns {Object} Validation result with status and any missing items
+   */
+  validateRequestOperationsForms() {
+    const result = {
+      valid: true,
+      missingForms: [],
+      errors: []
+    };
+
+    try {
+      // Read the request operations CodeSystem
+      const requestOpsCS = this.getRequestOperations();
+      
+      // Check if request-operations forms directory exists
+      const requestOpsFormsPath = join(this.formsPath, 'request-operations');
+      if (!existsSync(requestOpsFormsPath)) {
+        result.valid = false;
+        result.errors.push('Request operations forms directory does not exist: ' + requestOpsFormsPath);
+        return result;
+      }
+
+      // Check each request operation concept has a corresponding form
+      for (const concept of requestOpsCS.concept) {
+        const formFileName = `${concept.code}-form.json`;
+        const formPath = join(requestOpsFormsPath, formFileName);
+        
+        if (!existsSync(formPath)) {
+          result.valid = false;
+          result.missingForms.push({
+            code: concept.code,
+            form: formFileName,
+            path: formPath,
+            display: concept.display
+          });
+        }
+      }
+
+    } catch (error) {
+      result.valid = false;
+      result.errors.push(`Error validating request operations forms: ${error.message}`);
+    }
+
+    return result;
+  }
+
+  /**
    * Read and parse a CodeSystem JSON file
    * @param {string} filename - Name of the CodeSystem file
    * @returns {Object} Parsed JSON data
@@ -153,6 +200,30 @@ export function setupInformationService(app, registerEndpoint) {
     if (validation.errors.length > 0) {
       console.log('   Errors:');
       validation.errors.forEach(error => {
+        console.log(`     - ${error}`);
+      });
+    }
+  }
+
+  // Validate request operations forms
+  console.log('🔍 Validating request operations forms...');
+  const requestOpsValidation = informationService.validateRequestOperationsForms();
+  
+  if (requestOpsValidation.valid) {
+    console.log('✅ Request operations forms are valid');
+  } else {
+    console.log('⚠️  Request operations forms validation failed:');
+    
+    if (requestOpsValidation.missingForms.length > 0) {
+      console.log('   Missing forms:');
+      requestOpsValidation.missingForms.forEach(item => {
+        console.log(`     - ${item.code}: ${item.form} (${item.display})`);
+      });
+    }
+    
+    if (requestOpsValidation.errors.length > 0) {
+      console.log('   Errors:');
+      requestOpsValidation.errors.forEach(error => {
         console.log(`     - ${error}`);
       });
     }

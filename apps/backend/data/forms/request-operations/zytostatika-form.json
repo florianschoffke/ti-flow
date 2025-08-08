@@ -1,0 +1,220 @@
+{
+  "resourceType": "Questionnaire",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/4.0/StructureDefinition/Questionnaire"
+    ]
+  },
+  "title": "Anforderung eines E-Rezeptes für eine anwendungsfertige Zytostatikazubereitung",
+  "status": "draft",
+  "code": [
+    {
+      "system": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/request-operations-cs",
+      "code": "zytostatika",
+      "display": "Anforderung eines E-Rezeptes für eine anwendungsfertige Zytostatikazubereitung"
+    }
+  ],
+  "item": [
+    {
+      "type": "string",
+      "linkId": "patient_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "patient_name"
+        }
+      ],
+      "text": "Name des Patienten",
+      "required": true
+    },
+    {
+      "type": "date",
+      "linkId": "patient_birthdate",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "patient_birthdate"
+        }
+      ],
+      "text": "Geburtsdatum des Patienten",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "patient_insurance_number",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "patient_insurance_number"
+        }
+      ],
+      "text": "Versichertennummer",
+      "required": true
+    },
+    {
+      "type": "decimal",
+      "linkId": "patient_weight",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "patient_weight"
+        }
+      ],
+      "text": "Körpergewicht des Patienten (kg)",
+      "required": true
+    },
+    {
+      "type": "decimal",
+      "linkId": "patient_height",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "patient_height"
+        }
+      ],
+      "text": "Körpergröße des Patienten (cm)",
+      "required": true
+    },
+    {
+      "type": "decimal",
+      "linkId": "patient_bsa",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "patient_bsa"
+        }
+      ],
+      "text": "Körperoberfläche (m²)"
+    },
+    {
+      "type": "string",
+      "linkId": "requester_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "requester_name"
+        }
+      ],
+      "text": "Name des anfragenden Arztes",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "requester_tid",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "requester_tid"
+        }
+      ],
+      "text": "Telematik-ID des anfragenden Arztes",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "preparation_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "preparation_name"
+        }
+      ],
+      "text": "Name der Zytostatikazubereitung",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "active_ingredient",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "active_ingredient"
+        }
+      ],
+      "text": "Wirkstoff",
+      "required": true
+    },
+    {
+      "type": "decimal",
+      "linkId": "dosage_per_m2",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "dosage_per_m2"
+        }
+      ],
+      "text": "Dosierung pro m² Körperoberfläche",
+      "required": true
+    },
+    {
+      "type": "decimal",
+      "linkId": "total_dosage",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "total_dosage"
+        }
+      ],
+      "text": "Gesamtdosis",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "administration_route",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "administration_route"
+        }
+      ],
+      "text": "Applikationsweg",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "infusion_duration",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "infusion_duration"
+        }
+      ],
+      "text": "Infusionsdauer"
+    },
+    {
+      "type": "text",
+      "linkId": "therapy_protocol",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "therapy_protocol"
+        }
+      ],
+      "text": "Therapieprotokoll",
+      "required": true
+    },
+    {
+      "type": "date",
+      "linkId": "administration_date",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "administration_date"
+        }
+      ],
+      "text": "Geplantes Applikationsdatum",
+      "required": true
+    },
+    {
+      "type": "text",
+      "linkId": "special_instructions",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_Zytostatika_Codes",
+          "code": "special_instructions"
+        }
+      ],
+      "text": "Besondere Anweisungen"
+    }
+  ]
+}

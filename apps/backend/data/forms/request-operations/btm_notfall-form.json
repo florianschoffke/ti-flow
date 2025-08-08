@@ -1,0 +1,139 @@
+{
+  "resourceType": "Questionnaire",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/4.0/StructureDefinition/Questionnaire"
+    ]
+  },
+  "title": "Ausstellung einer Verordnung für Notfallanforderung eines Betäubungsmittels",
+  "status": "draft",
+  "code": [
+    {
+      "system": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/request-operations-cs",
+      "code": "btm_notfall",
+      "display": "Ausstellung einer Verordnung für Notfallanforderung eines Betäubungsmittels"
+    }
+  ],
+  "item": [
+    {
+      "type": "string",
+      "linkId": "patient_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_BTM_Codes",
+          "code": "patient_name"
+        }
+      ],
+      "text": "Name des Patienten",
+      "required": true
+    },
+    {
+      "type": "date",
+      "linkId": "patient_birthdate",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_BTM_Codes",
+          "code": "patient_birthdate"
+        }
+      ],
+      "text": "Geburtsdatum des Patienten",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "patient_insurance_number",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_BTM_Codes",
+          "code": "patient_insurance_number"
+        }
+      ],
+      "text": "Versichertennummer",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "requester_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_BTM_Codes",
+          "code": "requester_name"
+        }
+      ],
+      "text": "Name des anfragenden Arztes",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "requester_tid",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_BTM_Codes",
+          "code": "requester_tid"
+        }
+      ],
+      "text": "Telematik-ID des anfragenden Arztes",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "medication_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_BTM_Codes",
+          "code": "medication_name"
+        }
+      ],
+      "text": "Name des Betäubungsmittels",
+      "required": true
+    },
+    {
+      "type": "string",
+      "linkId": "medication_dosage",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_BTM_Codes",
+          "code": "medication_dosage"
+        }
+      ],
+      "text": "Dosierung",
+      "required": true
+    },
+    {
+      "type": "integer",
+      "linkId": "medication_quantity",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_BTM_Codes",
+          "code": "medication_quantity"
+        }
+      ],
+      "text": "Anzahl der Packungen",
+      "required": true
+    },
+    {
+      "type": "text",
+      "linkId": "emergency_justification",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_BTM_Codes",
+          "code": "emergency_justification"
+        }
+      ],
+      "text": "Begründung für Notfallanforderung",
+      "required": true
+    },
+    {
+      "type": "dateTime",
+      "linkId": "request_timestamp",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_BTM_Codes",
+          "code": "request_timestamp"
+        }
+      ],
+      "text": "Zeitpunkt der Anfrage",
+      "required": true
+    }
+  ]
+}
