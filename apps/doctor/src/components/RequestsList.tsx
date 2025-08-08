@@ -74,10 +74,14 @@ export function RequestsList() {
     if (!request.taskId || !questionnaire) return;
     
     // Create a counter-offer questionnaire with modified data
-    const counterOfferQuestionnaire = {
+    const counterOfferQuestionnaire: DoctorFlowQuestionnaire = {
+      resourceType: 'Questionnaire',
+      id: questionnaire.id,
+      status: questionnaire.status,
+      date: new Date().toISOString(),
       title: `Counter-offer: ${questionnaire.title}`,
       description: 'Modified prescription details from doctor',
-      items: questionnaire.items.map(item => ({
+      item: questionnaire.item.map(item => ({
         ...item,
         initial: [{ valueString: `Modified ${item.text}` }]
       }))
@@ -104,7 +108,7 @@ export function RequestsList() {
 
     setActionLoading(true);
     try {
-      await DoctorFlowService.closeTask(request.taskId, docId, docPw);
+      await DoctorFlowService.closeTask(request.taskId);
       await loadRequests(); // Refresh the list
       setShowDetails(false);
       alert(`Prescription created!\nDocument ID: ${docId}\nPassword: ${docPw}`);
@@ -165,7 +169,7 @@ export function RequestsList() {
             <div className="questionnaire-section">
               <h4>Anfrage Details:</h4>
               <div className="questionnaire-items">
-                {questionnaire.items.map((item, index) => (
+                {questionnaire.item.map((item, index) => (
                   <div key={index} className="questionnaire-item">
                     <label>{item.text}:</label>
                     <div className="item-value">

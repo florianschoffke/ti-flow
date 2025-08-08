@@ -12,6 +12,7 @@ function App() {
   const [patient, setPatient] = useState<Patient | null>(null)
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
   const [availableRequests, setAvailableRequests] = useState<CodeSystemConcept[]>([])
+  const [availableDocumentOperations, setAvailableDocumentOperations] = useState<CodeSystemConcept[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingRequests, setIsLoadingRequests] = useState(false)
   const [codeSystemError, setCodeSystemError] = useState<string | null>(null)
@@ -21,12 +22,17 @@ function App() {
   useEffect(() => {
     const loadCodeSystems = async () => {
       try {
-        // Load request operations CodeSystem
         setIsLoadingRequests(true)
+        
+        // Load request operations CodeSystem
         const requestCs = await TiFlowService.getRequestOperations()
         setAvailableRequests(requestCs.concepts || [])
-        setIsLoadingRequests(false)
         
+        // Load document operations CodeSystem  
+        const documentCs = await TiFlowService.getDocumentOperations()
+        setAvailableDocumentOperations(documentCs.concepts || [])
+        
+        setIsLoadingRequests(false)
         setCodeSystemError(null)
       } catch (error) {
         console.error('Failed to load CodeSystems:', error)
@@ -96,7 +102,7 @@ function App() {
           <div className="right-column">
             <PrescriptionList 
               prescriptions={prescriptions} 
-              availableOperations={availableRequests}
+              availableOperations={availableDocumentOperations}
               onRequestSubmitted={handleRequestSubmitted}
             />
           </div>

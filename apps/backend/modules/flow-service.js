@@ -26,7 +26,7 @@ class FlowService {
   constructor() {
     this.dataPath = join(__dirname, '..', 'data');
     this.dbPath = join(this.dataPath, 'flow-db.json');
-    this.initializeDatabase();
+    this.resetDatabase(); // Reset database on startup
   }
 
   /**
@@ -42,6 +42,21 @@ class FlowService {
       };
       writeFileSync(this.dbPath, JSON.stringify(initialDb, null, 2));
     }
+  }
+
+  /**
+   * Reset the database to initial state
+   */
+  resetDatabase() {
+    console.log('🔄 Resetting flow database...');
+    const initialDb = {
+      tasks: {},
+      questionnaires: {},
+      nextTaskId: 1,
+      nextQuestionnaireId: 1
+    };
+    writeFileSync(this.dbPath, JSON.stringify(initialDb, null, 2));
+    console.log('✅ Flow database reset complete');
   }
 
   /**
@@ -385,7 +400,7 @@ export function setupFlowService(app, registerEndpoint) {
   });
 
   // POST /$request - Create new flow request
-  app.post('/\\$request', (req, res) => {
+  app.post('/Task/$request', (req, res) => {
     try {
       const { requester, receiver, questionnaire } = req.body;
       
@@ -410,8 +425,8 @@ export function setupFlowService(app, registerEndpoint) {
     }
   });
 
-  // POST /:id/$counter-offer - Submit counter-offer
-  app.post('/:id/\\$counter-offer', (req, res) => {
+  // POST Task/:id/$counter-offer - Submit counter-offer
+  app.post('/Task/:id/$counter-offer', (req, res) => {
     try {
       const taskId = req.params.id;
       const { questionnaire } = req.body;
@@ -450,8 +465,8 @@ export function setupFlowService(app, registerEndpoint) {
     }
   });
 
-  // POST /:id/$reject - Reject request
-  app.post('/:id/\\$reject', (req, res) => {
+  // POST /Task/:id/$reject - Reject request
+  app.post('/Task/:id/$reject', (req, res) => {
     try {
       const taskId = req.params.id;
       const actor = req.headers['x-actor-id']; // Actor identification
@@ -483,7 +498,7 @@ export function setupFlowService(app, registerEndpoint) {
   });
 
   // POST /:id/$accept - Accept request
-  app.post('/:id/\\$accept', (req, res) => {
+  app.post('/Task/:id/$accept', (req, res) => {
     try {
       const taskId = req.params.id;
       const actor = req.headers['x-actor-id']; // Actor identification
@@ -515,7 +530,7 @@ export function setupFlowService(app, registerEndpoint) {
   });
 
   // POST /:id/$close - Close/Complete request
-  app.post('/:id/\\$close', (req, res) => {
+  app.post('/Task/:id/$close', (req, res) => {
     try {
       const taskId = req.params.id;
       const { docId, docPw } = req.body;
@@ -558,21 +573,21 @@ export function setupFlowService(app, registerEndpoint) {
   // Register endpoints for documentation
   registerEndpoint('Flow Service', 'GET', '/Task/:id', 'Get task status as FHIR Task resource');
   registerEndpoint('Flow Service', 'GET', '/Questionnaire/:id', 'Get questionnaire as FHIR Questionnaire resource');
-  registerEndpoint('Flow Service', 'POST', '/$request', 'Create new flow request with questionnaire');
-  registerEndpoint('Flow Service', 'POST', '/:id/$counter-offer', 'Submit counter-offer with updated questionnaire');
-  registerEndpoint('Flow Service', 'POST', '/:id/$reject', 'Reject a flow request (no content)');
-  registerEndpoint('Flow Service', 'POST', '/:id/$accept', 'Accept a flow request (no content)');
-  registerEndpoint('Flow Service', 'POST', '/:id/$close', 'Close/complete a request with document data');
+  registerEndpoint('Flow Service', 'POST', '/Task/$request', 'Create new flow request with questionnaire');
+  registerEndpoint('Flow Service', 'POST', '/Task/:id/$counter-offer', 'Submit counter-offer with updated questionnaire');
+  registerEndpoint('Flow Service', 'POST', '/Task/:id/$reject', 'Reject a flow request (no content)');
+  registerEndpoint('Flow Service', 'POST', '/Task/:id/$accept', 'Accept a flow request (no content)');
+  registerEndpoint('Flow Service', 'POST', '/Task/:id/$close', 'Close/complete a request with document data');
 
   console.log('✅ Flow Service module loaded');
   console.log('� Flow service endpoints configured:');
   console.log('   GET /Task/:id - Get task status');
   console.log('   GET /Questionnaire/:id - Get questionnaire');
-  console.log('   POST /$request - Create new request');
-  console.log('   POST /:id/$counter-offer - Submit counter-offer');
-  console.log('   POST /:id/$reject - Reject request');
-  console.log('   POST /:id/$accept - Accept request');
-  console.log('   POST /:id/$close - Close/complete request');
+  console.log('   POST /Task/$request - Create new request');
+  console.log('   POST /Task/:id/$counter-offer - Submit counter-offer');
+  console.log('   POST /Task/:id/$reject - Reject request');
+  console.log('   POST /Task/:id/$accept - Accept request');
+  console.log('   POST /Task/:id/$close - Close/complete request');
 }
 
 export { FlowService };

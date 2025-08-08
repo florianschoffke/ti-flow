@@ -42,11 +42,21 @@ export function PrescriptionList({ prescriptions, availableOperations, onRequest
                   <span className="composition-type">
                     {prescription.compositionType}
                   </span>
-                  <FlowOperationsDropdown 
-                    prescription={prescription}
-                    availableOperations={operations}
-                    onRequestSubmitted={onRequestSubmitted}
-                  />
+                  {operations.length > 0 ? (
+                    <FlowOperationsDropdown 
+                      prescription={prescription}
+                      availableOperations={operations}
+                      onRequestSubmitted={onRequestSubmitted}
+                    />
+                  ) : (
+                    <button 
+                      className="no-operations-btn"
+                      title={`Keine Operationen für ${prescription.compositionType} verfügbar`}
+                      disabled
+                    >
+                      ⚙️ Keine Aktionen
+                    </button>
+                  )}
                   <span className={`status status-${prescription.status}`}>
                     {prescription.status === 'pending' ? 'Offen' : 
                      prescription.status === 'dispensed' ? 'Abgegeben' : 'Storniert'}

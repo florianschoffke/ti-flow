@@ -37,7 +37,7 @@ export interface DoctorFlowQuestionnaire {
   date: string;
   title: string;
   description?: string;
-  items: Array<{
+  item: Array<{
     linkId: string;
     text: string;
     type: string;
@@ -219,18 +219,16 @@ export class DoctorFlowService {
 
   // Extract patient name from questionnaire
   private static extractPatientName(questionnaire: DoctorFlowQuestionnaire | null): string {
-    if (!questionnaire?.items) {
-      return 'Unknown Patient';
+    if (!questionnaire?.item) {
+      return 'Unbekannt';
     }
     
-    const patientItem = questionnaire.items.find(item => 
-      item.linkId.includes('patient') || item.text.toLowerCase().includes('patient')
+    const patientItem = questionnaire.item.find(item =>
+      item.linkId.includes('patient') || item.linkId.includes('name')
     );
     
-    return patientItem?.initial?.[0]?.valueString || 'Unknown Patient';
-  }
-
-  // Get pharmacy name from ID
+    return patientItem?.initial?.[0]?.valueString || 'Unbekannt';
+  }  // Get pharmacy name from ID
   private static getPharmacyName(pharmacyId: string): string {
     // In a real system, this would look up the pharmacy details
     const pharmacyNames: { [key: string]: string } = {

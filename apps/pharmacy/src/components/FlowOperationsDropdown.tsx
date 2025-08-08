@@ -96,9 +96,9 @@ export function FlowOperationsDropdown({ prescription, availableOperations, onRe
           className={`dropdown-trigger ${isLoading ? 'loading' : ''}`}
           onClick={() => setIsOpen(!isOpen)}
           disabled={isLoading}
-          title="Flow-Operationen"
+          title="Verfügbare Aktionen für dieses E-Rezept"
         >
-          {isLoading ? '...' : '⚙️'}
+          {isLoading ? 'Lädt...' : '⚙️ Aktionen'}
         </button>
         
         {isOpen && (

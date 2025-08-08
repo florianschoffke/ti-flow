@@ -45,7 +45,7 @@ export class TiFlowService {
 
   // Submit a flow request (creates a Task)
   static async submitFlowRequest(operationCode: string): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/$request`, {
+    return this.fetchWithAuth(`${BASE_URL}/Task/$request`, {
       method: 'POST',
       body: JSON.stringify({
         requester: 'pharmacy-app',
@@ -67,21 +67,21 @@ export class TiFlowService {
 
   // Accept a task
   static async acceptTask(taskId: string): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/${taskId}/$accept`, {
+    return this.fetchWithAuth(`${BASE_URL}/Task/${taskId}/$accept`, {
       method: 'POST'
     });
   }
 
   // Reject a task
   static async rejectTask(taskId: string): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/${taskId}/$reject`, {
+    return this.fetchWithAuth(`${BASE_URL}/Task/${taskId}/$reject`, {
       method: 'POST'
     });
   }
 
   // Submit counter offer
   static async submitCounterOffer(taskId: string, questionnaire: Questionnaire): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/${taskId}/$counter-offer`, {
+    return this.fetchWithAuth(`${BASE_URL}/Task/${taskId}/$counter-offer`, {
       method: 'POST',
       body: JSON.stringify({
         resourceType: 'Parameters',
@@ -97,7 +97,7 @@ export class TiFlowService {
 
   // Close a task
   static async closeTask(taskId: string): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/${taskId}/$close`, {
+    return this.fetchWithAuth(`${BASE_URL}/Task/${taskId}/$close`, {
       method: 'POST'
     });
   }
@@ -141,32 +141,38 @@ export class TiFlowService {
     try {
       const task = await this.getTask(requestId);
       
-      // Extract questionnaire response from task input
+      // Extract questionnaire reference from task input
       const questionnaireInput = task.input?.find((input: any) => 
-        input.type?.coding?.[0]?.code === 'questionnaire-response'
+        input.type?.text === 'questionnaire'
       );
 
       if (!questionnaireInput?.valueReference?.reference) {
-        throw new Error('No questionnaire response found in task');
+        throw new Error('No questionnaire found in task');
       }
+
+      // Get questionnaire ID from reference
+      const questionnaireRef = questionnaireInput.valueReference.reference;
+      const questionnaireId = questionnaireRef.split('/')[1];
+      
+      // Fetch the questionnaire
+      const questionnaire = await this.fetchWithAuth(`${BASE_URL}/Questionnaire/${questionnaireId}`);
 
       return {
         id: task.id,
-        type: task.code?.coding?.[0]?.display || 'Unknown Request',
-        kind: task.code?.coding?.[0]?.code || 'unknown',
+        type: questionnaire.title || 'Unknown Request',
+        kind: 'flow-request',
         status: task.status,
         requestDate: task.authoredOn || new Date().toISOString(),
         lastUpdated: task.lastModified || task.authoredOn || new Date().toISOString(),
-        questionnaireResponse: questionnaireInput.valueReference.resource || {
+        questionnaireResponse: {
           resourceType: 'QuestionnaireResponse',
-          questionnaire: 'flow-request',
+          questionnaire: questionnaireId,
           status: 'completed',
-          item: [
-            {
-              linkId: 'summary',
-              answer: [{ valueString: 'Request details' }]
-            }
-          ]
+          item: questionnaire.item.map((item: any) => ({
+            linkId: item.linkId,
+            text: item.text,
+            answer: item.initial || [{ valueString: 'Nicht angegeben' }]
+          }))
         }
       };
     } catch (error) {
