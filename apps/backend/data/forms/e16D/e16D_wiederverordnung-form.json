@@ -1,0 +1,75 @@
+{
+  "resourceType": "Questionnaire",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/4.0/StructureDefinition/Questionnaire"
+    ]
+  },
+  "title": "Muster 16D",
+  "status": "draft",
+  "code": [
+    {
+      "system": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/flow-operation-forms-cs",
+      "code": "e16D",
+      "display": "Muster 16D"
+    }
+  ],
+  "item": [
+    {
+      "type": "string",
+      "linkId": "744113603021",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16D_Codes",
+          "code": "patient_name"
+        }
+      ],
+      "text": "Name des Patienten"
+    },
+    {
+      "type": "string",
+      "linkId": "126520044507",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16D_Codes",
+          "code": "requester_name"
+        }
+      ],
+      "text": "Name des Anfragenden"
+    },
+    {
+      "type": "string",
+      "linkId": "505738877645",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16D_Codes",
+          "code": "requester_tid"
+        }
+      ],
+      "text": "Telematik ID des Anfragenden"
+    },
+    {
+      "type": "string",
+      "linkId": "180853824563",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16D_Codes",
+          "code": "prescription_id"
+        }
+      ],
+      "text": "Betreffendes Rezept"
+    },
+    {
+      "type": "text",
+      "linkId": "639744786989",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16D_Codes",
+          "code": "medication_request"
+        }
+      ],
+      "text": "Medikationsanfrage",
+      "repeats": true
+    }
+  ]
+}

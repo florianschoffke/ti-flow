@@ -1,12 +1,12 @@
 {
   "resourceType": "CodeSystem",
-  "status": "draft",
+  "status": "draft", 
   "content": "complete",
-  "name": "FlowOperationFormsCS",
-  "id": "flow-operation-forms-cs",
-  "title": "Flow Operation Forms CS",
+  "name": "DocumentOperationsCS",
+  "id": "document-operations-cs",
+  "title": "Document Operations CS",
   "version": "0.1.0",
-  "url": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/flow-operation-forms-cs",
+  "url": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/document-operations-cs",
   "concept": [
     {
       "code": "e16A",
@@ -24,7 +24,13 @@
     },
     {
       "code": "e16D",
-      "display": "Muster 16D"
+      "display": "Muster 16D",
+      "concept": [
+        {
+          "code": "e16D_wiederverordnung",
+          "display": "Wiederausstellung eine E-Rezeptes für eine DiGA"
+        }
+      ]
     },
     {
       "code": "arztbrief",

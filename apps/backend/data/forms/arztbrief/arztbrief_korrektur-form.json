@@ -1,0 +1,75 @@
+{
+  "resourceType": "Questionnaire",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/4.0/StructureDefinition/Questionnaire"
+    ]
+  },
+  "title": "Korrektur eines Arztbriefes",
+  "status": "draft",
+  "code": [
+    {
+      "system": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/flow-operation-forms-cs",
+      "code": "arztbrief_korrektur",
+      "display": "Korrektur eines Arztbriefes"
+    }
+  ],
+  "item": [
+    {
+      "type": "string",
+      "linkId": "744113603022",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_arztbrief_Codes",
+          "code": "patient_name"
+        }
+      ],
+      "text": "Name des Patienten"
+    },
+    {
+      "type": "string",
+      "linkId": "126520044508",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_arztbrief_Codes",
+          "code": "requester_name"
+        }
+      ],
+      "text": "Name des Anfragenden"
+    },
+    {
+      "type": "string",
+      "linkId": "505738877646",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_arztbrief_Codes",
+          "code": "requester_tid"
+        }
+      ],
+      "text": "Telematik ID des Anfragenden"
+    },
+    {
+      "type": "string",
+      "linkId": "180853824564",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_arztbrief_Codes",
+          "code": "document_id"
+        }
+      ],
+      "text": "Betreffender Arztbrief"
+    },
+    {
+      "type": "text",
+      "linkId": "639744786990",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_arztbrief_Codes",
+          "code": "correction_request"
+        }
+      ],
+      "text": "Korrekturanfrage",
+      "repeats": true
+    }
+  ]
+}

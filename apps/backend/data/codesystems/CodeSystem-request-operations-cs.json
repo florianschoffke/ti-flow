@@ -1,12 +1,12 @@
 {
   "resourceType": "CodeSystem",
-  "status": "draft",
+  "status": "draft", 
   "content": "complete",
-  "name": "FlowRequestsCS",
-  "id": "flow-requests-cs",
-  "title": "Flow Requests CS",
+  "name": "RequestOperationsCS",
+  "id": "request-operations-cs",
+  "title": "request Operations CS",
   "version": "0.1.0",
-  "url": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/flow-requests-cs",
+  "url": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/request-operations-cs",
   "concept": [
     {
       "code": "btm_notfall",
