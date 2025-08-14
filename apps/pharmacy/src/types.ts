@@ -49,6 +49,11 @@ export interface QuestionnaireItem {
   required?: boolean;
   repeats?: boolean;
   item?: QuestionnaireItem[];
+  initial?: Array<{
+    valueString?: string;
+    valueInteger?: number;
+    valueBoolean?: boolean;
+  }>;
 }
 
 export interface Questionnaire {
@@ -80,10 +85,24 @@ export interface QuestionnaireResponse {
     linkId: string;
     answer: Array<{
       valueString?: string;
+      valueInteger?: number;
+      valueBoolean?: boolean;
       valueQuantity?: {
         value: number;
         unit: string;
       };
+    }>;
+    item?: Array<{
+      linkId: string;
+      answer: Array<{
+        valueString?: string;
+        valueInteger?: number;
+        valueBoolean?: boolean;
+        valueQuantity?: {
+          value: number;
+          unit: string;
+        };
+      }>;
     }>;
   }>;
 }

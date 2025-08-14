@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { CodeSystemConcept, Questionnaire } from '../types';
+import { tiFlowService } from '../services/tiFlowService';
 import { QuestionnaireRenderer } from './QuestionnaireRenderer';
 
 interface RequestOperationsProps {
@@ -40,26 +41,9 @@ export function RequestOperations({ availableRequests, isLoading, onRequestSubmi
     try {
       console.log(`🔄 Executing request: ${request.display} (${request.code})`);
       
-      // Create a basic questionnaire for this request type
-      const questionnaire: Questionnaire = {
-        resourceType: 'Questionnaire',
-        title: request.display || request.code,
-        status: 'active',
-        item: [
-          {
-            linkId: 'description',
-            text: 'Beschreibung der Anfrage',
-            type: 'text',
-            required: false
-          },
-          {
-            linkId: 'priority',
-            text: 'Priorität',
-            type: 'choice',
-            required: true
-          }
-        ]
-      };
+      // Get the questionnaire from the backend
+      const questionnaire = await tiFlowService.getRequestOperationQuestionnaire(request.code);
+      console.log('✅ Questionnaire loaded:', questionnaire);
       
       setCurrentQuestionnaire(questionnaire);
       setCurrentRequestCode(request.code);

@@ -1,6 +1,7 @@
 import type {
   CodeSystemConcept,
   Questionnaire,
+  QuestionnaireResponse,
   ActiveRequest,
   RequestDetails
 } from '../types';
@@ -43,21 +44,45 @@ export class TiFlowService {
     };
   }
 
+  // Get a specific questionnaire for a request operation code
+  static async getRequestOperationQuestionnaire(code: string): Promise<Questionnaire> {
+    const response = await this.fetchWithAuth(`${BASE_URL}/$request-operations?code=${code}`);
+    return response;
+  }
+
+  // Get all tasks for the current user
+  static async getTasksForUser(user: string = 'pharmacy-app'): Promise<any[]> {
+    const response = await this.fetchWithAuth(`${BASE_URL}/Task?user=${user}`);
+    return response.entry?.map((entry: any) => entry.resource) || [];
+  }
+
+  // Get a questionnaire by ID
+  static async getQuestionnaireById(id: string): Promise<Questionnaire> {
+    const response = await this.fetchWithAuth(`${BASE_URL}/Questionnaire/${id}`);
+    return response;
+  }
+
+  // Get a questionnaire response by ID
+  static async getQuestionnaireResponseById(id: string): Promise<QuestionnaireResponse> {
+    const response = await this.fetchWithAuth(`${BASE_URL}/QuestionnaireResponse/${id}`);
+    return response;
+  }
+
   // Submit a flow request (creates a Task)
-  static async submitFlowRequest(operationCode: string): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/Task/$request`, {
+  static async submitFlowRequest(questionnaireResponse: QuestionnaireResponse): Promise<any> {
+    return this.fetchWithAuth(`${BASE_URL}/$request`, {
       method: 'POST',
       body: JSON.stringify({
         requester: 'pharmacy-app',
         receiver: 'doctor-app',
-        questionnaire: operationCode
+        questionnaireResponse: questionnaireResponse
       })
     });
   }
 
   // Create a new flow request
-  static async createFlowRequest(operationCode: string): Promise<any> {
-    return this.submitFlowRequest(operationCode);
+  static async createFlowRequest(questionnaireResponse: QuestionnaireResponse): Promise<any> {
+    return this.submitFlowRequest(questionnaireResponse);
   }
 
   // Get a specific task
@@ -65,23 +90,23 @@ export class TiFlowService {
     return this.fetchWithAuth(`${BASE_URL}/Task/${taskId}`);
   }
 
-  // Accept a task
+    // Accept a task
   static async acceptTask(taskId: string): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/Task/${taskId}/$accept`, {
+    return this.fetchWithAuth(`${BASE_URL}/${taskId}/$accept`, {
       method: 'POST'
     });
   }
 
   // Reject a task
   static async rejectTask(taskId: string): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/Task/${taskId}/$reject`, {
+    return this.fetchWithAuth(`${BASE_URL}/${taskId}/$reject`, {
       method: 'POST'
     });
   }
 
   // Submit counter offer
   static async submitCounterOffer(taskId: string, questionnaire: Questionnaire): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/Task/${taskId}/$counter-offer`, {
+    return this.fetchWithAuth(`${BASE_URL}/${taskId}/$counter-offer`, {
       method: 'POST',
       body: JSON.stringify({
         resourceType: 'Parameters',
@@ -97,7 +122,7 @@ export class TiFlowService {
 
   // Close a task
   static async closeTask(taskId: string): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/Task/${taskId}/$close`, {
+    return this.fetchWithAuth(`${BASE_URL}/${taskId}/$close`, {
       method: 'POST'
     });
   }

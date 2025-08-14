@@ -54,6 +54,9 @@ body {
   font-size: 0.9em;
 }
 
+/* Removed action-section and action-buttons styles - no longer needed in simplified UI */
+
+/*
 .action-section {
   text-align: center;
   margin-bottom: 32px;
@@ -78,6 +81,7 @@ body {
   color: #0c5460;
   display: inline-block;
 }
+*/
 
 .load-prescriptions-btn {
   background: #10b981;
@@ -104,25 +108,27 @@ body {
   transform: none;
 }
 
+.loading-section {
+  text-align: center;
+  padding: 48px 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e9ecef;
+}
+
+.loading-section p {
+  margin: 0;
+  font-size: 1.1em;
+  color: #4a5568;
+}
+
 .content-section {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 24px;
   margin-top: 24px;
 }
 
-.left-column {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.right-column {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Patient Info Styles */
+/* Patient Info Styles - Commented out as no longer used in simplified UI */
+/*
 .patient-info {
   background: white;
   border: 1px solid #e5e7eb;
@@ -169,6 +175,7 @@ body {
   text-align: right;
   flex: 1;
 }
+*/
 
 /* Prescription List Styles */
 .prescription-list {
@@ -462,6 +469,21 @@ body {
 .questionnaire-textarea.auto-populated:focus {
   border-color: #64748b;
   box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
+}
+
+/* Read-only styling for task details */
+.questionnaire-input[readonly],
+.questionnaire-textarea[readonly] {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  color: #6c757d;
+  cursor: default;
+}
+
+.questionnaire-input[readonly]:focus,
+.questionnaire-textarea[readonly]:focus {
+  border-color: #dee2e6;
+  box-shadow: none;
 }
 
 .field-hint {
@@ -1140,4 +1162,273 @@ body {
     transform: translateX(-50%);
     min-width: 280px;
   }
+}
+
+/* Task List Styles */
+.task-list {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.task-list.loading {
+  text-align: center;
+  color: #6b7280;
+}
+
+.task-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #10b981;
+  padding-bottom: 8px;
+}
+
+.task-list-header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.4em;
+  font-weight: 600;
+}
+
+.refresh-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refresh-btn:hover {
+  background: #e5e7eb;
+}
+
+.error-message {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  border: 1px solid #fecaca;
+}
+
+.no-tasks {
+  text-align: center;
+  color: #6b7280;
+  padding: 40px 20px;
+}
+
+.tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.task-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f9fafb;
+  transition: all 0.2s ease;
+}
+
+.task-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.task-id {
+  font-size: 0.9em;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.task-body {
+  margin-bottom: 16px;
+}
+
+.task-body h4 {
+  margin: 0 0 8px 0;
+  color: #374151;
+  font-size: 1.1em;
+}
+
+.task-body p {
+  margin: 4px 0;
+  font-size: 0.9em;
+  color: #6b7280;
+}
+
+.task-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.details-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.details-btn:hover {
+  background: #2563eb;
+}
+
+/* Modal Styles for Task Details */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.5em;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.close-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.modal-body {
+  padding: 0;
+}
+
+/* Responsive Design for Task List */
+@media (max-width: 768px) {
+  .tasks-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .task-list-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .task-list-header h3 {
+    text-align: center;
+  }
+}
+
+/* QuestionnaireResponse Viewer Styles */
+.questionnaire-response-item {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.questionnaire-response-label {
+  display: block;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 4px;
+  font-size: 0.9em;
+  text-transform: capitalize;
+}
+
+.questionnaire-response-value {
+  color: #212529;
+  font-size: 1em;
+  padding: 8px 0;
+  word-wrap: break-word;
+}
+
+.questionnaire-response-info {
+  background: #e3f2fd;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border: 1px solid #bbdefb;
+}
+
+.questionnaire-response-info p {
+  margin: 4px 0;
+  font-size: 0.9em;
+}
+
+.questionnaire-response-form h3 {
+  color: #1f2937;
+  margin: 0 0 16px 0;
+  font-size: 1.2em;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 8px;
+}
+
+.questionnaire-response-group {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.questionnaire-response-group h4 {
+  margin: 0 0 12px 0;
+  color: #495057;
+  font-size: 1.1em;
+  text-transform: capitalize;
 }

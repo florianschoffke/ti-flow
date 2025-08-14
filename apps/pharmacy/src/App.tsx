@@ -1,63 +1,46 @@
 import { useState, useEffect } from 'react'
-import type { Patient, Prescription, CodeSystemConcept } from './types'
-import { mockPatient, mockPrescriptions } from './mockData'
-import { PatientInfo } from './components/PatientInfo'
+import type { Prescription, CodeSystemConcept } from './types'
+import { mockPrescriptions } from './mockData'
 import { PrescriptionList } from './components/PrescriptionList'
-import { RequestOperations } from './components/RequestOperations'
-import { ActiveRequestsList } from './components/ActiveRequestsList'
+import { TaskList } from './components/TaskList'
 import { TiFlowService } from './services/tiFlowService'
 import './App.css'
 
 function App() {
-  const [patient, setPatient] = useState<Patient | null>(null)
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
-  const [availableRequests, setAvailableRequests] = useState<CodeSystemConcept[]>([])
   const [availableDocumentOperations, setAvailableDocumentOperations] = useState<CodeSystemConcept[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isLoadingRequests, setIsLoadingRequests] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [codeSystemError, setCodeSystemError] = useState<string | null>(null)
-  const [requestSubmittedTrigger, setRequestSubmittedTrigger] = useState(0)
 
-  // Load CodeSystem on component mount
+  // Load prescriptions and CodeSystem on component mount
   useEffect(() => {
-    const loadCodeSystems = async () => {
+    const loadData = async () => {
       try {
-        setIsLoadingRequests(true)
-        
-        // Load request operations CodeSystem
-        const requestCs = await TiFlowService.getRequestOperations()
-        setAvailableRequests(requestCs.concepts || [])
+        setIsLoading(true)
         
         // Load document operations CodeSystem  
         const documentCs = await TiFlowService.getDocumentOperations()
         setAvailableDocumentOperations(documentCs.concepts || [])
         
-        setIsLoadingRequests(false)
+        // Load prescriptions automatically
+        await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call delay
+        setPrescriptions(mockPrescriptions)
+        
+        setIsLoading(false)
         setCodeSystemError(null)
       } catch (error) {
-        console.error('Failed to load CodeSystems:', error)
+        console.error('Failed to load data:', error)
         setCodeSystemError('Failed to load operations from backend')
-        setIsLoadingRequests(false)
+        setIsLoading(false)
       }
     }
 
-    loadCodeSystems()
+    loadData()
   }, [])
 
-  const handleLoadPrescriptions = async () => {
-    setIsLoading(true)
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    setPatient(mockPatient)
-    setPrescriptions(mockPrescriptions)
-    setIsLoading(false)
-  }
-
   const handleRequestSubmitted = () => {
-    // Trigger refresh of active requests list
-    setRequestSubmittedTrigger(prev => prev + 1)
+    // Handle request submission if needed
+    console.log('Request submitted')
   }
 
   return (
@@ -73,40 +56,20 @@ function App() {
       </header>
 
       <main className="app-main">
-        <div className="action-section">
-          <div className="action-buttons">
-            <button 
-              className="load-prescriptions-btn"
-              onClick={handleLoadPrescriptions}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Lädt...' : 'E-Rezepte abrufen'}
-            </button>
-            
-            <RequestOperations 
-              availableRequests={availableRequests}
-              isLoading={isLoadingRequests}
-              onRequestSubmitted={handleRequestSubmitted}
-            />
+        {isLoading ? (
+          <div className="loading-section">
+            <p>Lädt E-Rezepte...</p>
           </div>
-        </div>
-
-        <div className="content-section">
-          <div className="left-column">
-            <PatientInfo patient={patient} />
-            <ActiveRequestsList 
-              key={requestSubmittedTrigger} 
-              onRequestSubmitted={handleRequestSubmitted}
-            />
-          </div>
-          <div className="right-column">
+        ) : (
+          <div className="content-section">
+            <TaskList />
             <PrescriptionList 
               prescriptions={prescriptions} 
               availableOperations={availableDocumentOperations}
               onRequestSubmitted={handleRequestSubmitted}
             />
           </div>
-        </div>
+        )}
       </main>
     </div>
   )

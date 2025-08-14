@@ -4,10 +4,11 @@ import { tiFlowService } from '../services/tiFlowService';
 
 interface QuestionnaireRendererProps {
   questionnaire: Questionnaire;
-  prescription: Prescription | null;
-  operationCode: string;
-  onClose: () => void;
+  prescription?: Prescription | null;
+  operationCode?: string;
+  onClose?: () => void;
   onRequestSubmitted?: () => void;
+  readOnly?: boolean;
 }
 
 interface FormData {
@@ -18,13 +19,16 @@ interface GroupInstance {
   [linkId: string]: string | { value: string; unit: string };
 }
 
-export function QuestionnaireRenderer({ questionnaire, prescription, operationCode, onClose, onRequestSubmitted }: QuestionnaireRendererProps) {
+export function QuestionnaireRenderer({ questionnaire, prescription, operationCode, onClose, onRequestSubmitted, readOnly = false }: QuestionnaireRendererProps) {
   const [formData, setFormData] = useState<FormData>(() => {
     // Pre-populate form with available data
     const initialData: FormData = {};
     
     questionnaire.item.forEach(item => {
-      if (item.code?.[0]?.code === 'patient_name') {
+      // First check if there are initial values (submitted data)
+      if (item.initial && item.initial.length > 0) {
+        initialData[item.linkId] = item.initial[0].valueString || '';
+      } else if (item.code?.[0]?.code === 'patient_name') {
         // Use prescription data if available, otherwise leave empty for manual entry
         if (prescription) {
           initialData[item.linkId] = `Patient für ${prescription.medication}`;
@@ -159,7 +163,7 @@ export function QuestionnaireRenderer({ questionnaire, prescription, operationCo
               value={value}
               onChange={(e) => handleInputChange(item.linkId, e.target.value)}
               className={`questionnaire-input ${isAutoPopulated ? 'auto-populated' : ''}`}
-              readOnly={isAutoPopulated}
+              readOnly={isAutoPopulated || readOnly}
             />
             {hint && (
               <div className="field-hint">
@@ -181,7 +185,7 @@ export function QuestionnaireRenderer({ questionnaire, prescription, operationCo
               onChange={(e) => handleInputChange(item.linkId, e.target.value)}
               className={`questionnaire-textarea ${isAutoPopulated ? 'auto-populated' : ''}`}
               rows={3}
-              readOnly={isAutoPopulated}
+              readOnly={isAutoPopulated || readOnly}
             />
             {hint && (
               <div className="field-hint">
@@ -365,51 +369,73 @@ export function QuestionnaireRenderer({ questionnaire, prescription, operationCo
     setIsSubmitting(true);
     
     try {
-      // Create FHIR QuestionnaireResponse with proper handling of groups
-      const responseItems: any[] = [];
+      console.log('📝 Submitting flow request with questionnaire response');
       
-      // Add regular form fields
-      Object.entries(formData).forEach(([linkId, value]) => {
-        responseItems.push({
-          linkId,
-          answer: [{ valueString: value }]
-        });
+      // Create a proper FHIR QuestionnaireResponse
+      const questionnaireResponse = {
+        resourceType: "QuestionnaireResponse",
+        questionnaire: questionnaire.title || "Unknown Questionnaire", // Reference to original questionnaire
+        status: "completed",
+        item: []
+      };
+
+      // Add simple form items
+      questionnaire.item.forEach(item => {
+        const answer = formData[item.linkId];
+        if (answer && answer.trim() !== '') {
+          const responseItem = {
+            linkId: item.linkId,
+            answer: []
+          };
+
+          // Add the answer based on the item type
+          if (item.type === 'integer') {
+            responseItem.answer.push({ valueInteger: parseInt(answer) || 0 });
+          } else {
+            responseItem.answer.push({ valueString: answer });
+          }
+
+          questionnaireResponse.item.push(responseItem);
+        }
       });
-      
+
       // Add group instances
       Object.entries(groupInstances).forEach(([groupLinkId, instances]) => {
         instances.forEach((instance) => {
-          const groupItem: any = {
+          const groupItem = {
             linkId: groupLinkId,
             item: []
           };
           
           Object.entries(instance).forEach(([childLinkId, childValue]) => {
-            if (typeof childValue === 'object' && childValue.value !== undefined) {
-              // Handle quantity values
-              const quantity = {
-                value: parseFloat(childValue.value) || 0,
-                unit: childValue.unit || ''
-              };
-              groupItem.item.push({
-                linkId: childLinkId,
-                answer: [{ valueQuantity: quantity }]
-              });
-            } else {
-              // Handle string values
-              groupItem.item.push({
-                linkId: childLinkId,
-                answer: [{ valueString: childValue }]
-              });
+            if (childValue !== undefined && childValue !== null && childValue !== '') {
+              if (typeof childValue === 'object' && childValue.value !== undefined) {
+                // Handle quantity values
+                const quantity = {
+                  value: parseFloat(childValue.value) || 0,
+                  unit: childValue.unit || ''
+                };
+                groupItem.item.push({
+                  linkId: childLinkId,
+                  answer: [{ valueQuantity: quantity }]
+                });
+              } else {
+                // Handle string values
+                groupItem.item.push({
+                  linkId: childLinkId,
+                  answer: [{ valueString: childValue }]
+                });
+              }
             }
           });
           
-          responseItems.push(groupItem);
+          if (groupItem.item.length > 0) {
+            questionnaireResponse.item.push(groupItem);
+          }
         });
       });
-      console.log('📝 Submitting flow request with operation:', operationCode);
       
-      const result = await tiFlowService.submitFlowRequest(operationCode);
+      const result = await tiFlowService.submitFlowRequest(questionnaireResponse);
       console.log('✅ Flow request submitted successfully:', result);
       
       // Call the callback to refresh active requests list
@@ -418,7 +444,9 @@ export function QuestionnaireRenderer({ questionnaire, prescription, operationCo
       }
       
       // Close the form
-      onClose();
+      if (onClose) {
+        onClose();
+      }
       
     } catch (error) {
       console.error('❌ Failed to submit flow request:', error);
@@ -428,12 +456,18 @@ export function QuestionnaireRenderer({ questionnaire, prescription, operationCo
     }
   };
 
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
   return (
     <div className="questionnaire-overlay">
       <div className="questionnaire-modal">
         <div className="questionnaire-header">
           <h2>{questionnaire.title}</h2>
-          <button className="close-button" onClick={onClose} aria-label="Schließen">
+          <button className="close-button" onClick={handleClose} aria-label="Schließen">
             ✕
           </button>
         </div>
@@ -450,24 +484,38 @@ export function QuestionnaireRenderer({ questionnaire, prescription, operationCo
           </form>
         </div>
         
-        <div className="questionnaire-actions">
-          <button 
-            type="button" 
-            className="btn btn-secondary" 
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
-            Abbrechen
-          </button>
-          <button 
-            type="button" 
-            className="btn btn-primary" 
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Wird gesendet...' : 'Senden'}
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="questionnaire-actions">
+            <button 
+              type="button" 
+              className="btn btn-secondary" 
+              onClick={handleClose}
+              disabled={isSubmitting}
+            >
+              Abbrechen
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-primary" 
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Wird gesendet...' : 'Senden'}
+            </button>
+          </div>
+        )}
+        
+        {readOnly && (
+          <div className="questionnaire-actions">
+            <button 
+              type="button" 
+              className="btn btn-secondary" 
+              onClick={handleClose}
+            >
+              Schließen
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

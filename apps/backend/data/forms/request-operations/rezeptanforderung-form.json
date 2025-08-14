@@ -5,22 +5,22 @@
       "http://hl7.org/fhir/4.0/StructureDefinition/Questionnaire"
     ]
   },
-  "title": "Anforderung eines Rezeptes",
+  "title": "Korrektur eines Muster 16",
   "status": "draft",
   "code": [
     {
-      "system": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/request-operations-cs",
-      "code": "rezeptanforderung",
-      "display": "Anforderung eines Rezeptes"
+      "system": "https://test.gematik.de/fhir/sid/flow-operations",
+      "code": "e16A_Korrektur",
+      "display": "Korrektur eines Muster 16"
     }
   ],
   "item": [
     {
       "type": "string",
-      "linkId": "patient_name",
+      "linkId": "744113603020",
       "code": [
         {
-          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "system": "http://gematik.de/CS_e16A_Codes",
           "code": "patient_name"
         }
       ],
@@ -28,150 +28,86 @@
       "required": true
     },
     {
-      "type": "date",
-      "linkId": "patient_birthdate",
+      "type": "string",
+      "linkId": "579806732389",
       "code": [
         {
-          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
-          "code": "patient_birthdate"
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "patient_mrn"
         }
       ],
-      "text": "Geburtsdatum des Patienten",
+      "text": "Verischerungsnummer",
       "required": true
     },
     {
       "type": "string",
-      "linkId": "patient_insurance_number",
+      "linkId": "126520044506",
       "code": [
         {
-          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
-          "code": "patient_insurance_number"
-        }
-      ],
-      "text": "Versichertennummer",
-      "required": true
-    },
-    {
-      "type": "string",
-      "linkId": "requester_name",
-      "code": [
-        {
-          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "system": "http://gematik.de/CS_e16A_Codes",
           "code": "requester_name"
         }
       ],
-      "text": "Name des anfragenden Arztes/Apothekers",
+      "text": "Name des Anfragenden",
       "required": true
     },
     {
       "type": "string",
-      "linkId": "requester_tid",
+      "linkId": "505738877644",
       "code": [
         {
-          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
+          "system": "http://gematik.de/CS_e16A_Codes",
           "code": "requester_tid"
         }
       ],
-      "text": "Telematik-ID des Anfragenden",
+      "text": "Telematik ID des Anfragenden",
       "required": true
     },
     {
-      "type": "choice",
-      "linkId": "prescription_type",
-      "code": [
+      "item": [
         {
-          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
-          "code": "prescription_type"
-        }
-      ],
-      "text": "Art des angeforderten Rezeptes",
-      "required": true,
-      "answerOption": [
-        {
-          "valueCoding": {
-            "code": "medication",
-            "display": "Arzneimittelverordnung"
-          }
+          "type": "integer",
+          "linkId": "162012817157",
+          "text": "PZN"
         },
         {
-          "valueCoding": {
-            "code": "medical_device",
-            "display": "Hilfsmittelverordnung"
-          }
+          "type": "quantity",
+          "linkId": "677102290290",
+          "text": "Menge"
         },
         {
-          "valueCoding": {
-            "code": "therapy",
-            "display": "Heilmittelverordnung"
-          }
-        }
-      ]
-    },
-    {
-      "type": "string",
-      "linkId": "medication_name",
-      "code": [
-        {
-          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
-          "code": "medication_name"
-        }
-      ],
-      "text": "Name des Medikaments/der Verordnung"
-    },
-    {
-      "type": "text",
-      "linkId": "medical_indication",
-      "code": [
-        {
-          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
-          "code": "medical_indication"
-        }
-      ],
-      "text": "Medizinische Indikation",
-      "required": true
-    },
-    {
-      "type": "choice",
-      "linkId": "urgency_level",
-      "code": [
-        {
-          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
-          "code": "urgency_level"
-        }
-      ],
-      "text": "Dringlichkeit",
-      "required": true,
-      "answerOption": [
-        {
-          "valueCoding": {
-            "code": "routine",
-            "display": "Routine"
-          }
+          "type": "boolean",
+          "linkId": "648941054860",
+          "text": "Veränderte Dosierung?"
         },
         {
-          "valueCoding": {
-            "code": "urgent",
-            "display": "Dringend"
-          }
+          "type": "string",
+          "linkId": "450083130796",
+          "text": "Dosierungsvorschlag",
+          "enableWhen": [
+            {
+              "question": "648941054860",
+              "operator": "=",
+              "answerBoolean": true
+            }
+          ]
         },
         {
-          "valueCoding": {
-            "code": "emergency",
-            "display": "Notfall"
-          }
-        }
-      ]
-    },
-    {
-      "type": "text",
-      "linkId": "additional_notes",
-      "code": [
-        {
-          "system": "http://gematik.de/CS_Rezeptanforderung_Codes",
-          "code": "additional_notes"
+          "type": "text",
+          "linkId": "923048068089",
+          "text": "Bemerkung"
         }
       ],
-      "text": "Zusätzliche Anmerkungen"
+      "type": "group",
+      "linkId": "639744786988",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "rx_request"
+        }
+      ],
+      "text": "Korrekturwunsch",
+      "repeats": true
     }
   ]
 }

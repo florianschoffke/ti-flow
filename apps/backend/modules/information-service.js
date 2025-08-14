@@ -167,6 +167,29 @@ class InformationService {
   getRequestOperations() {
     return this.readCodeSystem('CodeSystem-request-operations-cs.json');
   }
+
+  /**
+   * Get a specific questionnaire by operation code
+   * @param {string} code - The operation code
+   * @returns {Object|null} The questionnaire or null if not found
+   */
+  getQuestionnaireByCode(code) {
+    try {
+      const formFileName = `${code}-form.json`;
+      const formPath = join(this.formsPath, 'request-operations', formFileName);
+      
+      if (!existsSync(formPath)) {
+        console.error(`Questionnaire form not found: ${formPath}`);
+        return null;
+      }
+      
+      const data = readFileSync(formPath, 'utf8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error(`Error reading questionnaire for code ${code}:`, error);
+      return null;
+    }
+  }
 }
 
 /**
@@ -249,11 +272,30 @@ export function setupInformationService(app, registerEndpoint) {
   // Request Operations endpoint  
   app.get('/\\$request-operations', (req, res) => {
     try {
-      console.log('📋 Serving request operations CodeSystem');
-      const codeSystem = informationService.getRequestOperations();
+      const { code } = req.query;
       
-      res.setHeader('Content-Type', 'application/fhir+json');
-      res.json(codeSystem);
+      if (code) {
+        // Return specific questionnaire for the operation code
+        console.log(`📋 Serving questionnaire for operation code: ${code}`);
+        const questionnaire = informationService.getQuestionnaireByCode(code);
+        
+        if (!questionnaire) {
+          return res.status(404).json({
+            error: 'Questionnaire not found',
+            message: `No questionnaire found for operation code: ${code}`
+          });
+        }
+        
+        res.setHeader('Content-Type', 'application/fhir+json');
+        res.json(questionnaire);
+      } else {
+        // Return the full CodeSystem as before
+        console.log('📋 Serving request operations CodeSystem');
+        const codeSystem = informationService.getRequestOperations();
+        
+        res.setHeader('Content-Type', 'application/fhir+json');
+        res.json(codeSystem);
+      }
     } catch (error) {
       console.error('Error serving request operations:', error);
       res.status(500).json({

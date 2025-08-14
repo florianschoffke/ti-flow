@@ -20,7 +20,16 @@ const TASK_STATUS = {
 
 /**
  * Flow Service Module
- * Handles questionnaire population and flow request processing with state management
+ * Hand  console.log('✅ Flow Se  console.log('✅ Flow Service module loaded');
+  console.log('📋 Flow service endpoints configured:');
+  console.log('   GET /Task?user=<user> - Get all tasks for user');
+  console.log('   GET /Task/:id - Get task status');
+  console.log('   GET /Questionnaire/:id - Get questionnaire');
+  console.log('   GET /QuestionnaireResponse/:id - Get questionnaire response');
+  console.log('   POST /Task/$request - Create new request'); module loaded');
+  console.log('📋 Flow service endpoints configured:');
+  console.log('   GET /Task?user=<user> - Get all tasks for user');
+  console.log('   GET /Task/:id - Get task status'); questionnaire population and flow request processing with state management
  */
 class FlowService {
   constructor() {
@@ -104,18 +113,18 @@ class FlowService {
   /**
    * Create a new flow request
    */
-  createRequest(requester, receiver, questionnaire) {
+  createRequest(requester, receiver, questionnaireResponse) {
     const db = this.loadDatabase();
     
     // Generate IDs
     const taskId = this.generateTaskId(db);
-    const questionnaireId = this.generateQuestionnaireId(db);
+    const questionnaireResponseId = this.generateQuestionnaireId(db);
     const now = new Date().toISOString();
 
-    // Store questionnaire
-    db.questionnaires[questionnaireId] = {
-      id: questionnaireId,
-      ...questionnaire,
+    // Store questionnaire response
+    db.questionnaires[questionnaireResponseId] = {
+      id: questionnaireResponseId,
+      ...questionnaireResponse,
       created: now
     };
 
@@ -128,13 +137,13 @@ class FlowService {
       updated: now,
       status: TASK_STATUS.REQUESTED,
       owner: requester, // Initially owned by requester
-      questionnaireId
+      questionnaireResponseId
     };
 
     db.tasks[taskId] = task;
     this.saveDatabase(db);
 
-    return { taskId, questionnaireId, task };
+    return { taskId, questionnaireResponseId, task };
   }
 
   /**
@@ -143,6 +152,24 @@ class FlowService {
   getTask(taskId) {
     const db = this.loadDatabase();
     return db.tasks[taskId] || null;
+  }
+
+  /**
+   * Get all tasks for a user (where user is either requester or receiver)
+   */
+  getTasksForUser(user) {
+    const db = this.loadDatabase();
+    const userTasks = [];
+    
+    for (const taskId in db.tasks) {
+      const task = db.tasks[taskId];
+      if (task.requester === user || task.receiver === user) {
+        userTasks.push(task);
+      }
+    }
+    
+    // Sort by creation date (newest first)
+    return userTasks.sort((a, b) => new Date(b.created) - new Date(a.created));
   }
 
   /**
@@ -295,10 +322,10 @@ class FlowService {
       input: [
         {
           type: {
-            text: "questionnaire"
+            text: "questionnaire-response"
           },
           valueReference: {
-            reference: `Questionnaire/${task.questionnaireId}`
+            reference: `QuestionnaireResponse/${task.questionnaireResponseId}`
           }
         }
       ]
@@ -344,6 +371,35 @@ class FlowService {
  */
 export function setupFlowService(app, registerEndpoint) {
   const flowService = new FlowService();
+
+  // GET /Task?user=<user> - Get all tasks for a user (where user is requester or receiver)
+  app.get('/Task', (req, res) => {
+    try {
+      const user = req.query.user;
+      
+      if (!user) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'Missing required query parameter: user'
+        });
+      }
+
+      const tasks = flowService.getTasksForUser(user);
+      const fhirTasks = tasks.map(task => flowService.toFhirTask(task));
+      
+      res.json({
+        resourceType: 'Bundle',
+        type: 'searchset',
+        total: fhirTasks.length,
+        entry: fhirTasks.map(task => ({
+          resource: task
+        }))
+      });
+    } catch (error) {
+      console.error('Error getting tasks for user:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
 
   // GET /Task/:id - Get task status as FHIR Task
   app.get('/Task/:id', (req, res) => {
@@ -399,24 +455,44 @@ export function setupFlowService(app, registerEndpoint) {
     }
   });
 
-  // POST /$request - Create new flow request
-  app.post('/Task/$request', (req, res) => {
+  // GET /QuestionnaireResponse/:id - Get questionnaire response as FHIR QuestionnaireResponse
+  app.get('/QuestionnaireResponse/:id', (req, res) => {
     try {
-      const { requester, receiver, questionnaire } = req.body;
+      const questionnaireResponseId = req.params.id;
+      const questionnaireResponse = flowService.getQuestionnaire(questionnaireResponseId); // Using same storage for now
       
-      if (!requester || !receiver || !questionnaire) {
-        return res.status(400).json({
-          error: 'Missing required fields',
-          message: 'requester, receiver, and questionnaire are required'
+      if (!questionnaireResponse) {
+        return res.status(404).json({
+          error: 'QuestionnaireResponse not found',
+          message: `QuestionnaireResponse with ID ${questionnaireResponseId} does not exist`
         });
       }
 
-      const result = flowService.createRequest(requester, receiver, questionnaire);
+      res.json(questionnaireResponse);
+    } catch (error) {
+      console.error('Error getting questionnaire response:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // POST /$request - Create new flow request
+  app.post('/\\$request', (req, res) => {
+    try {
+      const { requester, receiver, questionnaireResponse } = req.body;
+      
+      if (!requester || !receiver || !questionnaireResponse) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          message: 'requester, receiver, and questionnaireResponse are required'
+        });
+      }
+
+      const result = flowService.createRequest(requester, receiver, questionnaireResponse);
       
       res.status(201).json({
         message: 'Flow request created successfully',
         taskId: result.taskId,
-        questionnaireId: result.questionnaireId,
+        questionnaireResponseId: result.questionnaireResponseId,
         task: flowService.toFhirTask(result.task)
       });
     } catch (error) {
@@ -571,9 +647,11 @@ export function setupFlowService(app, registerEndpoint) {
   });
 
   // Register endpoints for documentation
+  registerEndpoint('Flow Service', 'GET', '/Task', 'Get all tasks for a user (query param: user)');
   registerEndpoint('Flow Service', 'GET', '/Task/:id', 'Get task status as FHIR Task resource');
   registerEndpoint('Flow Service', 'GET', '/Questionnaire/:id', 'Get questionnaire as FHIR Questionnaire resource');
-  registerEndpoint('Flow Service', 'POST', '/Task/$request', 'Create new flow request with questionnaire');
+  registerEndpoint('Flow Service', 'GET', '/QuestionnaireResponse/:id', 'Get questionnaire response as FHIR QuestionnaireResponse resource');
+  registerEndpoint('Flow Service', 'POST', '/Task/$request', 'Create new flow request with questionnaire response');
   registerEndpoint('Flow Service', 'POST', '/Task/:id/$counter-offer', 'Submit counter-offer with updated questionnaire');
   registerEndpoint('Flow Service', 'POST', '/Task/:id/$reject', 'Reject a flow request (no content)');
   registerEndpoint('Flow Service', 'POST', '/Task/:id/$accept', 'Accept a flow request (no content)');
