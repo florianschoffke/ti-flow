@@ -1,51 +1,6 @@
 {
-  "tasks": {
-    "1": {
-      "id": "1",
-      "requester": "pharmacy-app",
-      "receiver": "doctor-app",
-      "created": "2025-08-08T13:22:53.499Z",
-      "updated": "2025-08-08T13:23:10.607Z",
-      "status": "received",
-      "owner": "doctor-app",
-      "questionnaireResponseId": "1"
-    }
-  },
-  "questionnaires": {
-    "1": {
-      "id": "1",
-      "resourceType": "QuestionnaireResponse",
-      "questionnaire": "Korrektur eines Muster 16",
-      "status": "completed",
-      "item": [
-        {
-          "linkId": "prescription-id",
-          "answer": [
-            {
-              "valueString": "rx-002"
-            }
-          ]
-        },
-        {
-          "linkId": "patient-id",
-          "answer": [
-            {
-              "valueString": "123"
-            }
-          ]
-        },
-        {
-          "linkId": "description",
-          "answer": [
-            {
-              "valueString": "Bitte 2 Packungen"
-            }
-          ]
-        }
-      ],
-      "created": "2025-08-08T13:22:53.499Z"
-    }
-  },
-  "nextTaskId": 2,
-  "nextQuestionnaireId": 2
+  "tasks": {},
+  "questionnaires": {},
+  "nextTaskId": 1,
+  "nextQuestionnaireId": 1
 }

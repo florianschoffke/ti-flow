@@ -1,13 +1,14 @@
-import type { Prescription, CodeSystemConcept } from '../types';
+import type { Prescription, CodeSystemConcept, FhirBundle } from '../types';
 import { FlowOperationsDropdown } from './FlowOperationsDropdown';
 
 interface PrescriptionListProps {
   prescriptions: Prescription[];
   availableOperations: CodeSystemConcept[];
+  fhirBundles?: FhirBundle[];
   onRequestSubmitted?: () => void;
 }
 
-export function PrescriptionList({ prescriptions, availableOperations, onRequestSubmitted }: PrescriptionListProps) {
+export function PrescriptionList({ prescriptions, availableOperations, fhirBundles, onRequestSubmitted }: PrescriptionListProps) {
   if (prescriptions.length === 0) {
     return (
       <div className="prescription-list">
@@ -25,6 +26,11 @@ export function PrescriptionList({ prescriptions, availableOperations, onRequest
     
     // Return the nested concepts (subconcepts) if they exist
     return matchingConcept?.concept || [];
+  };
+
+  // Helper function to get FHIR bundle for a prescription (for future questionnaire use)
+  const getFhirBundleForPrescription = (prescriptionId: string) => {
+    return fhirBundles?.find(bundle => bundle.prescriptionId === prescriptionId);
   };
 
   return (

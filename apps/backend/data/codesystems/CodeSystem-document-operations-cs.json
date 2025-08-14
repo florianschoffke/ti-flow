@@ -17,8 +17,8 @@
           "display": "Korrektur eines Muster 16"
         },
         {
-          "code": "e16A_wiederverordnung",
-          "display": "Wiederausstellung eines Muster 16"
+          "code": "e16A_neuausstellung",
+          "display": "Neuausstellung eines Muster 16"
         }
       ]
     },
@@ -27,8 +27,8 @@
       "display": "Muster 16D",
       "concept": [
         {
-          "code": "e16D_wiederverordnung",
-          "display": "Wiederausstellung eine E-Rezeptes für eine DiGA"
+          "code": "e16D_neuausstellung",
+          "display": "Neuausstellung eine E-Rezeptes für eine DiGA"
         }
       ]
     },

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
-import type { Prescription, CodeSystemConcept } from './types'
-import { mockPrescriptions } from './mockData'
+import type { Prescription, CodeSystemConcept, FhirBundle } from './types'
 import { PrescriptionList } from './components/PrescriptionList'
 import { TaskList } from './components/TaskList'
 import { TiFlowService } from './services/tiFlowService'
+import { PrescriptionLoaderService } from './services/prescriptionLoaderService'
 import './App.css'
 
 function App() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
+  const [fhirBundles, setFhirBundles] = useState<FhirBundle[]>([])
   const [availableDocumentOperations, setAvailableDocumentOperations] = useState<CodeSystemConcept[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [codeSystemError, setCodeSystemError] = useState<string | null>(null)
@@ -22,9 +23,10 @@ function App() {
         const documentCs = await TiFlowService.getDocumentOperations()
         setAvailableDocumentOperations(documentCs.concepts || [])
         
-        // Load prescriptions automatically
-        await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call delay
-        setPrescriptions(mockPrescriptions)
+        // Load prescriptions from FHIR XML files
+        const prescriptionData = await PrescriptionLoaderService.loadPrescriptions()
+        setPrescriptions(prescriptionData.prescriptions)
+        setFhirBundles(prescriptionData.fhirBundles)
         
         setIsLoading(false)
         setCodeSystemError(null)
@@ -58,7 +60,7 @@ function App() {
       <main className="app-main">
         {isLoading ? (
           <div className="loading-section">
-            <p>Lädt E-Rezepte...</p>
+            <p>Lädt E-Rezepte aus FHIR XML-Dateien...</p>
           </div>
         ) : (
           <div className="content-section">
@@ -66,6 +68,7 @@ function App() {
             <PrescriptionList 
               prescriptions={prescriptions} 
               availableOperations={availableDocumentOperations}
+              fhirBundles={fhirBundles}
               onRequestSubmitted={handleRequestSubmitted}
             />
           </div>
