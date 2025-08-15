@@ -2,7 +2,7 @@
   "pharmacyInfo": {
     "name": "Apotheke am Stadtplatz",
     "owner": "Dr. Martha Müller",
-    "telematikId": "1-AVS-12345678901",
+    "telematikId": "3-AVS-12345678901",
     "address": {
       "street": "Hauptstraße 42",
       "postalCode": "10117",

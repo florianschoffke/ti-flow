@@ -1,3 +1,5 @@
+import { DoctorInfoService } from './doctorInfoService';
+
 // Doctor service interface types
 export interface DoctorFlowTask {
   resourceType: 'Task';
@@ -165,54 +167,60 @@ export class DoctorFlowService {
     return result.task;
   }
 
-  // Get all requests for this doctor
+    // Get all requests for this doctor
   static async getAllRequests(): Promise<DoctorRequest[]> {
     try {
+      const doctorTelematikId = DoctorInfoService.getDoctorTelematikId();
+      const response = await fetch(`${API_BASE_URL}/Task?user=${doctorTelematikId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-actor-id': 'doctor-app'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get requests: ${response.statusText}`);
+      }
+      
+      const bundle = await response.json();
       const requests: DoctorRequest[] = [];
       
-      // Try to get some recent tasks (scan approach)
-      for (let i = 1; i <= 10; i++) {
-        try {
-          const task = await this.getTask(i.toString());
-          
-          // Check if this task is for the doctor
-          if (task && task.for?.reference === 'Organization/doctor-app') {
-            const questionnaireRef = task.input[0]?.valueReference?.reference;
-            let questionnaire = null;
-            
-            if (questionnaireRef) {
-              const questionnaireId = questionnaireRef.split('/')[1];
-              try {
-                questionnaire = await this.getQuestionnaire(questionnaireId);
-              } catch (error) {
-                // Questionnaire might not exist
-              }
-            }
-            
-            // Extract pharmacy name from requester reference
-            const pharmacyRef = task.requester.reference;
-            const pharmacyId = pharmacyRef.split('/')[1];
-            
-            requests.push({
-              id: task.id,
-              type: questionnaire?.title || task.description || 'Flow Request',
-              patientName: this.extractPatientName(questionnaire),
-              pharmacyName: this.getPharmacyName(pharmacyId),
-              status: this.mapTaskStatusToRequestStatus(task.businessStatus.text),
-              requestDate: task.authoredOn,
-              details: questionnaire?.description || 'Flow request',
-              taskId: task.id
-            });
+      // Process each task in the bundle
+      for (const entry of bundle.entry || []) {
+        const task = entry.resource;
+        if (!task) continue;
+        
+        let questionnaire = null;
+        const questionnaireRef = task.input?.[0]?.valueReference?.reference;
+        
+        if (questionnaireRef) {
+          const questionnaireId = questionnaireRef.split('/')[1];
+          try {
+            questionnaire = await this.getQuestionnaire(questionnaireId);
+          } catch (error) {
+            console.warn(`Failed to load questionnaire ${questionnaireId}:`, error);
           }
-        } catch (error) {
-          // Task doesn't exist, continue until we hit non-existent tasks
-          break;
         }
+        
+        // Extract pharmacy name from requester reference
+        const pharmacyRef = task.requester?.reference || '';
+        const pharmacyId = pharmacyRef.split('/')[1] || 'Unknown';
+        
+        requests.push({
+          id: task.id,
+          type: questionnaire?.title || task.description || 'Flow Request',
+          patientName: this.extractPatientName(questionnaire),
+          pharmacyName: this.getPharmacyName(pharmacyId),
+          status: this.mapTaskStatusToRequestStatus(task.status),
+          requestDate: task.authoredOn || new Date().toISOString(),
+          details: questionnaire?.description || task.description || 'No details available',
+          taskId: task.id
+        });
       }
       
       return requests;
     } catch (error) {
-      console.error('Failed to get all requests:', error);
+      console.error('Failed to load requests:', error);
       return [];
     }
   }

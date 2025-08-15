@@ -145,9 +145,9 @@ export function RequestsList() {
 
   if (showDetails && selectedRequest) {
     return (
-      <div className="requests-section">
+      <div className="card">
         <div className="requests-header">
-          <h2>📋 Anfragedetails</h2>
+          <h3>📋 Anfragedetails</h3>
           <button 
             onClick={() => setShowDetails(false)}
             className="back-button"
@@ -157,7 +157,7 @@ export function RequestsList() {
         </div>
 
         <div className="request-details">
-          <h3>{selectedRequest.type}</h3>
+          <h4>{selectedRequest.type}</h4>
           <p><strong>Patient:</strong> {selectedRequest.patientName}</p>
           <p><strong>Apotheke:</strong> {selectedRequest.pharmacyName}</p>
           <p><strong>Status:</strong> <span style={{ color: getStatusColor(selectedRequest.status) }}>
@@ -167,7 +167,7 @@ export function RequestsList() {
 
           {questionnaire && (
             <div className="questionnaire-section">
-              <h4>Anfrage Details:</h4>
+              <h5>Anfrage Details:</h5>
               <div className="questionnaire-items">
                 {questionnaire.item.map((item, index) => (
                   <div key={index} className="questionnaire-item">
@@ -246,9 +246,9 @@ export function RequestsList() {
   }
 
   return (
-    <div className="requests-section">
+    <div className="card">
       <div className="requests-header">
-        <h2>📋 Anfragen von Apotheken</h2>
+        <h3>📋 Anfragen von Apotheken</h3>
         <button onClick={loadRequests} disabled={isLoading} className="refresh-button">
           {isLoading ? '⟳' : '🔄'} Aktualisieren
         </button>
@@ -266,7 +266,7 @@ export function RequestsList() {
           {requests.map(request => (
             <div key={request.id} className="request-card">
               <div className="request-header">
-                <h3>{request.type}</h3>
+                <h4>{request.type}</h4>
                 <span 
                   className="request-status"
                   style={{ backgroundColor: getStatusColor(request.status) }}
