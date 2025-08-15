@@ -2,6 +2,7 @@ import { readFileSync, existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import fhirpath from 'fhirpath';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -359,92 +360,39 @@ class InformationService {
   }
 
   /**
-   * Simple FHIRPath expression evaluator for common patterns
-   * @param {string} expression - FHIRPath expression
-   * @param {Object} bundle - FHIR Bundle
+   * SDC-compliant FHIRPath expression evaluator
+   * @param {string} expression - FHIRPath expression from questionnaire initialExpression
+   * @param {Object} bundle - FHIR Bundle context
    * @returns {string|null} Evaluated value or null
    */
   evaluateSimpleFHIRPath(expression, bundle) {
     try {
-      // Replace %resource with the bundle context
-      const context = bundle;
+      console.log(`📊 Evaluating FHIRPath: ${expression}`);
+      console.log(`📦 Bundle context:`, JSON.stringify(bundle, null, 2));
       
-      // Patient name concatenation
-      if (expression.includes("resourceType='Patient'") && expression.includes('name') && expression.includes('family') && expression.includes('given')) {
-        const patient = context.entry?.find(e => e.resource?.resourceType === 'Patient')?.resource;
-        if (patient?.name) {
-          const officialName = patient.name.find(n => n.use === 'official') || patient.name[0];
-          if (officialName) {
-            const family = officialName.family || '';
-            const given = Array.isArray(officialName.given) ? officialName.given.join(' ') : (officialName.given || '');
-            return `${family}, ${given}`.trim().replace(/^,\s*/, '').replace(/,\s*$/, '');
-          }
-        }
+      // Handle %resource replacement properly - %resource refers to the bundle in our case
+      // Remove %resource. prefix since we're evaluating against the bundle directly
+      let processedExpression = expression.replace(/%resource\./g, '');
+      console.log(`🔄 Processed expression: ${processedExpression}`);
+      
+      // Use the fhirpath library for proper FHIRPath evaluation
+      const result = fhirpath.evaluate(bundle, processedExpression);
+      console.log(`📊 FHIRPath result:`, result);
+      
+      if (Array.isArray(result) && result.length > 0) {
+        // Return the first result, converted to string
+        const firstResult = result[0];
+        const stringResult = firstResult !== null && firstResult !== undefined ? String(firstResult) : null;
+        console.log(`✅ Returning: ${stringResult}`);
+        return stringResult;
       }
-
-      // Patient KVNR
-      if (expression.includes("resourceType='Patient'") && expression.includes("type.coding.code='KVZ10'")) {
-        const patient = context.entry?.find(e => e.resource?.resourceType === 'Patient')?.resource;
-        const kvnrIdentifier = patient?.identifier?.find(id => 
-          id.type?.coding?.some(c => c.code === 'KVZ10')
-        );
-        return kvnrIdentifier?.value || null;
-      }
-
-      // Prescription ID
-      if (expression.includes('identifier') && expression.includes('GEM_ERP_NS_PrescriptionId')) {
-        // Bundle.identifier is a single object, not an array
-        const prescriptionId = context.identifier;
-        if (prescriptionId?.system === 'https://gematik.de/fhir/erp/NamingSystem/GEM_ERP_NS_PrescriptionId') {
-          return prescriptionId.value || null;
-        }
-        return null;
-      }
-
-      // Medication name
-      if (expression.includes("resourceType='Medication'") && expression.includes('code.text')) {
-        const medication = context.entry?.find(e => e.resource?.resourceType === 'Medication')?.resource;
-        return medication?.code?.text || null;
-      }
-
-      // Practitioner name
-      if (expression.includes("resourceType='Practitioner'") && expression.includes('name')) {
-        const practitioner = context.entry?.find(e => e.resource?.resourceType === 'Practitioner')?.resource;
-        if (practitioner?.name) {
-          const officialName = practitioner.name.find(n => n.use === 'official') || practitioner.name[0];
-          if (officialName) {
-            const prefix = Array.isArray(officialName.prefix) ? officialName.prefix.join(' ') : (officialName.prefix || '');
-            const given = Array.isArray(officialName.given) ? officialName.given.join(' ') : (officialName.given || '');
-            const family = officialName.family || '';
-            return `${prefix} ${given} ${family}`.trim();
-          }
-        }
-      }
-
-      // Practitioner LANR
-      if (expression.includes("resourceType='Practitioner'") && expression.includes("type.coding.code='LANR'")) {
-        const practitioner = context.entry?.find(e => e.resource?.resourceType === 'Practitioner')?.resource;
-        const lanrIdentifier = practitioner?.identifier?.find(id =>
-          id.type?.coding?.some(c => c.code === 'LANR')
-        );
-        return lanrIdentifier?.value || null;
-      }
-
-      // Organization name
-      if (expression.includes("resourceType='Organization'") && expression.includes('name')) {
-        const organization = context.entry?.find(e => e.resource?.resourceType === 'Organization')?.resource;
-        return organization?.name || null;
-      }
-
-      // MedicationRequest authoredOn
-      if (expression.includes("resourceType='MedicationRequest'") && expression.includes('authoredOn')) {
-        const medicationRequest = context.entry?.find(e => e.resource?.resourceType === 'MedicationRequest')?.resource;
-        return medicationRequest?.authoredOn || null;
-      }
-
+      
+      console.log(`❌ No result found`);
       return null;
+      
     } catch (error) {
-      console.warn('Error evaluating FHIRPath expression:', error.message);
+      console.warn(`❌ FHIRPath evaluation failed for expression: ${expression}`);
+      console.warn(`❌ Error: ${error.message}`);
       return null;
     }
   }

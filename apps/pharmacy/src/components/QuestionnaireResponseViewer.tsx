@@ -16,7 +16,7 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
     questionnaireResponse.item?.forEach(item => {
       if (item.answer && item.answer.length > 0) {
         const answer = item.answer[0];
-        values[item.linkId] = answer.valueString || answer.valueInteger?.toString() || '';
+        values[item.linkId] = answer.valueString || answer.valueDate || answer.valueInteger?.toString() || '';
       } else {
         values[item.linkId] = '';
       }
@@ -59,7 +59,7 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
           answer: fieldValues[item.linkId] ? [
             // Determine value type based on linkId patterns
             item.linkId.includes('date') 
-              ? { valueString: fieldValues[item.linkId] } // Store dates as strings for now
+              ? { valueDate: fieldValues[item.linkId] } // Store dates as valueDate
               : /^\d+$/.test(fieldValues[item.linkId])
               ? { valueInteger: parseInt(fieldValues[item.linkId]) || 0 }
               : { valueString: fieldValues[item.linkId] }

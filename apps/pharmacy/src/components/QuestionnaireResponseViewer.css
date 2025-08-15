@@ -355,23 +355,19 @@
 /* Enhanced responsive design for larger modal */
 @media (min-width: 1400px) {
   .group-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr; /* 3 columns on very wide screens */
-    gap: 2rem;
+    display: block; /* Changed from grid to block for vertical layout */
   }
 }
 
 @media (min-width: 1024px) and (max-width: 1399px) {
   .group-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 columns on medium-wide screens */
-    gap: 2rem;
+    display: block; /* Changed from grid to block for vertical layout */
   }
 }
 
 @media (min-width: 1024px) {
   .group-content .questionnaire-response-item {
-    margin-bottom: 0;
+    margin-bottom: 1.5rem; /* Restored bottom margin for vertical spacing */
   }
 }
 

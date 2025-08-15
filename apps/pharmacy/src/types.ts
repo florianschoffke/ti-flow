@@ -236,6 +236,7 @@ export interface QuestionnaireResponse {
       valueString?: string;
       valueInteger?: number;
       valueBoolean?: boolean;
+      valueDate?: string;
       valueQuantity?: {
         value: number;
         unit: string;
@@ -247,6 +248,7 @@ export interface QuestionnaireResponse {
         valueString?: string;
         valueInteger?: number;
         valueBoolean?: boolean;
+        valueDate?: string;
         valueQuantity?: {
           value: number;
           unit: string;

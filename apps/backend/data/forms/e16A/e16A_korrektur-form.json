@@ -38,7 +38,7 @@
           "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
           "valueExpression": {
             "language": "text/fhirpath",
-            "expression": "%resource.entry.resource.where(resourceType='Patient').name.where(use='official').family + ', ' + %resource.entry.resource.where(resourceType='Patient').name.where(use='official').given.join(' ')"
+            "expression": "%resource.entry.resource.where(resourceType='Patient').name.where(use='official').first().family + ', ' + %resource.entry.resource.where(resourceType='Patient').name.where(use='official').first().given.first()"
           }
         }
       ]
@@ -59,7 +59,7 @@
           "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
           "valueExpression": {
             "language": "text/fhirpath",
-            "expression": "%resource.entry.resource.where(resourceType='Patient').identifier.where(type.coding.code='KVZ10').value"
+            "expression": "%resource.entry.resource.where(resourceType='Patient').identifier.where(type.coding.where(code='KVZ10')).first().value"
           }
         }
       ]
@@ -80,7 +80,7 @@
           "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression", 
           "valueExpression": {
             "language": "text/fhirpath",
-            "expression": "%resource.identifier.where(system='https://gematik.de/fhir/erp/NamingSystem/GEM_ERP_NS_PrescriptionId').value"
+            "expression": "%resource.identifier.where(system='https://gematik.de/fhir/erp/NamingSystem/GEM_ERP_NS_PrescriptionId').value.first()"
           }
         }
       ]
@@ -101,6 +101,7 @@
           "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
           "valueExpression": {
             "language": "text/fhirpath", 
+            "description": "Extract medication name with optional PZN code prefix",
             "expression": "%resource.entry.resource.where(resourceType='Medication').code.text"
           }
         }
