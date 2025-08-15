@@ -94,9 +94,24 @@ export class TiFlowService {
           const xmlFilePath = xmlFilePaths[0];
           
           console.log(`🔄 Converting XML file to proper FHIR JSON: ${xmlFilePath}`);
+          console.log('📦 Original bundle before conversion:', fhirBundle);
           properFhirBundle = await FhirXmlToJsonConverter.convertXmlToJson(xmlFilePath);
           console.log('✅ Successfully converted XML to FHIR JSON');
-          console.log('📋 Converted bundle:', properFhirBundle);
+          console.log('📋 Converted bundle entries count:', properFhirBundle?.entry?.length || 0);
+          console.log('📋 Converted bundle structure:', {
+            resourceType: properFhirBundle?.resourceType,
+            id: properFhirBundle?.id,
+            type: properFhirBundle?.type,
+            entryTypes: properFhirBundle?.entry?.map((e: any) => e.resource?.resourceType) || []
+          });
+          
+          // Check specifically for Medication resource
+          const medEntry = properFhirBundle?.entry?.find((e: any) => e.resource?.resourceType === 'Medication');
+          if (medEntry) {
+            console.log('💊 Found Medication resource in converted bundle:', medEntry.resource);
+          } else {
+            console.log('❌ No Medication resource found in converted bundle');
+          }
           
         } catch (error) {
           console.warn('⚠️ Failed to convert XML to JSON, using original bundle:', error);

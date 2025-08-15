@@ -342,7 +342,28 @@ class InformationService {
       try {
         // Simple FHIRPath expression evaluation for common patterns
         const expression = initialExpression.valueExpression.expression;
+        
+        // Add special logging for medication_name field
+        if (item.linkId === 'medication_name') {
+          console.log(`🔍 Evaluating medication_name with expression: ${expression}`);
+          console.log(`📦 Bundle entries count: ${fhirBundle?.entry?.length || 0}`);
+          if (fhirBundle?.entry) {
+            console.log(`📦 Entry types: ${fhirBundle.entry.map(e => e.resource?.resourceType).join(', ')}`);
+            const medEntry = fhirBundle.entry.find(e => e.resource?.resourceType === 'Medication');
+            if (medEntry) {
+              console.log(`💊 Found Medication resource:`, JSON.stringify(medEntry.resource, null, 2));
+            } else {
+              console.log(`❌ No Medication resource found in bundle`);
+            }
+          }
+        }
+        
         const populatedValue = this.evaluateSimpleFHIRPath(expression, fhirBundle);
+        
+        // Add logging for medication_name result
+        if (item.linkId === 'medication_name') {
+          console.log(`💊 Medication name evaluation result: "${populatedValue}"`);
+        }
         
         if (populatedValue !== null && populatedValue !== undefined && populatedValue !== '') {
           // Create answer based on item type
