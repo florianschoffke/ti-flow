@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DoctorFlowService } from '../services/doctorFlowService';
+import { PatientService, type Patient } from '../services/patientService';
 
 interface PrescriptionFormProps {
   onPrescriptionCreated?: () => void;
@@ -19,14 +20,50 @@ export function PrescriptionForm({ onPrescriptionCreated, prefillData, taskId }:
   const [error, setError] = useState<string | null>(null);
   const [prescriptionResult, setPrescriptionResult] = useState<{ prescriptionId: string; secret: string } | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  
+  // Helper function to check if a field is prefilled
+  const isPrefilled = (fieldName: string) => {
+    if (!prefillData) return false;
+    
+    switch (fieldName) {
+      case 'patientId': return prefillData.patientId !== undefined && prefillData.patientId !== '';
+      case 'medication': return prefillData.medication !== undefined && prefillData.medication !== '';
+      case 'pzn': return prefillData.pzn !== undefined && prefillData.pzn !== '';
+      case 'dosage': return prefillData.dosage !== undefined && prefillData.dosage !== '';
+      case 'packages': return prefillData.packages !== undefined && prefillData.packages !== '';
+      default: return false;
+    }
+  };
+
+  // Default values for non-prefilled fields
+  const getDefaultValue = (fieldName: string, prefilledValue?: string | number) => {
+    if (prefilledValue !== undefined && prefilledValue !== '') {
+      return prefilledValue.toString();
+    }
+    
+    switch (fieldName) {
+      case 'patientId': return 'pat-001'; // Default to first patient (Anna Müller)
+      case 'medication': return 'Ibuprofen 400mg';
+      case 'pzn': return '12345678';
+      case 'dosage': return '1 Tablette täglich';
+      case 'packages': return '1';
+      default: return '';
+    }
+  };
   
   const [formData, setFormData] = useState({
     patientId: prefillData?.patientId || '',
-    medication: prefillData?.medication || '',
-    pzn: prefillData?.pzn?.toString() || '',
-    dosage: prefillData?.dosage || '',
-    packages: prefillData?.packages?.toString() || ''
+    medication: getDefaultValue('medication', prefillData?.medication),
+    pzn: getDefaultValue('pzn', prefillData?.pzn),
+    dosage: getDefaultValue('dosage', prefillData?.dosage),
+    packages: getDefaultValue('packages', prefillData?.packages)
   });
+
+  useEffect(() => {
+    // Load mock patients
+    setPatients(PatientService.getMockPatients());
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +154,16 @@ export function PrescriptionForm({ onPrescriptionCreated, prefillData, taskId }:
         // Show prescription form
         <form onSubmit={handleSubmit}>
         <div className="form-group">
+          {isPrefilled('patientId') && (
+            <div className="prefilled-indicator">
+              📝 Aus Rezeptanfrage übernommen
+            </div>
+          )}
+          {!isPrefilled('patientId') && (
+            <div className="default-indicator">
+              📋 Aus vorheriger Verordnung übernommen
+            </div>
+          )}
           <label htmlFor="patientId">Patient auswählen</label>
           <select
             id="patientId"
@@ -124,15 +171,31 @@ export function PrescriptionForm({ onPrescriptionCreated, prefillData, taskId }:
             value={formData.patientId}
             onChange={handleChange}
             required
+            style={{
+              color: isPrefilled('patientId') ? 'inherit' : 'inherit',
+              fontStyle: isPrefilled('patientId') ? 'italic' : 'normal'
+            }}
           >
             <option value="">Bitte wählen...</option>
-            <option value="pat-001">Anna Müller (A123456789)</option>
-            <option value="pat-002">Hans Schmidt (B987654321)</option>
-            <option value="pat-003">Maria Weber (C456789123)</option>
+            {patients.map(patient => (
+              <option key={patient.id} value={patient.id}>
+                {patient.name} ({patient.insuranceNumber})
+              </option>
+            ))}
           </select>
         </div>
 
         <div className="form-group">
+          {isPrefilled('medication') && (
+            <div className="prefilled-indicator">
+              📝 Aus Rezeptanfrage übernommen
+            </div>
+          )}
+          {!isPrefilled('medication') && (
+            <div className="default-indicator">
+              � Aus vorheriger Verordnung übernommen
+            </div>
+          )}
           <label htmlFor="medication">Medikament</label>
           <input
             type="text"
@@ -142,10 +205,24 @@ export function PrescriptionForm({ onPrescriptionCreated, prefillData, taskId }:
             onChange={handleChange}
             placeholder="z.B. Ibuprofen 400mg"
             required
+            style={{
+              color: isPrefilled('medication') ? 'inherit' : 'inherit',
+              fontStyle: isPrefilled('medication') ? 'italic' : 'normal'
+            }}
           />
         </div>
 
         <div className="form-group">
+          {isPrefilled('pzn') && (
+            <div className="prefilled-indicator">
+              📝 Aus Rezeptanfrage übernommen
+            </div>
+          )}
+          {!isPrefilled('pzn') && (
+            <div className="default-indicator">
+              � Aus vorheriger Verordnung übernommen
+            </div>
+          )}
           <label htmlFor="pzn">PZN (Pharmazentralnummer)</label>
           <input
             type="number"
@@ -154,10 +231,24 @@ export function PrescriptionForm({ onPrescriptionCreated, prefillData, taskId }:
             value={formData.pzn}
             onChange={handleChange}
             placeholder="z.B. 12345678"
+            style={{
+              color: isPrefilled('pzn') ? 'inherit' : 'inherit',
+              fontStyle: isPrefilled('pzn') ? 'italic' : 'normal'
+            }}
           />
         </div>
 
         <div className="form-group">
+          {isPrefilled('dosage') && (
+            <div className="prefilled-indicator">
+              📝 Aus Rezeptanfrage übernommen
+            </div>
+          )}
+          {!isPrefilled('dosage') && (
+            <div className="default-indicator">
+              � Aus vorheriger Verordnung übernommen
+            </div>
+          )}
           <label htmlFor="dosage">Dosierung</label>
           <input
             type="text"
@@ -167,10 +258,24 @@ export function PrescriptionForm({ onPrescriptionCreated, prefillData, taskId }:
             onChange={handleChange}
             placeholder="z.B. 1 Tablette"
             required
+            style={{
+              color: isPrefilled('dosage') ? 'inherit' : 'inherit',
+              fontStyle: isPrefilled('dosage') ? 'italic' : 'normal'
+            }}
           />
         </div>
 
         <div className="form-group">
+          {isPrefilled('packages') && (
+            <div className="prefilled-indicator">
+              📝 Aus Rezeptanfrage übernommen
+            </div>
+          )}
+          {!isPrefilled('packages') && (
+            <div className="default-indicator">
+              � Aus vorheriger Verordnung übernommen
+            </div>
+          )}
           <label htmlFor="packages">Anzahl Packungen</label>
           <input
             type="number"
@@ -180,6 +285,10 @@ export function PrescriptionForm({ onPrescriptionCreated, prefillData, taskId }:
             onChange={handleChange}
             placeholder="z.B. 2"
             min="1"
+            style={{
+              color: isPrefilled('packages') ? 'inherit' : 'inherit',
+              fontStyle: isPrefilled('packages') ? 'italic' : 'normal'
+            }}
           />
         </div>
 

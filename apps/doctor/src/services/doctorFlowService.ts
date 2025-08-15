@@ -73,7 +73,7 @@ export interface DoctorRequest {
   type: string;
   patientName: string;
   pharmacyName: string;
-  status: 'pending' | 'approved' | 'rejected' | 'in-progress';
+  status: 'pending' | 'approved' | 'rejected' | 'in-progress' | 'completed';
   requestDate: string;
   details: string;
   taskId?: string;
@@ -286,14 +286,15 @@ export class DoctorFlowService {
   }
 
   // Map task status to request status
-  private static mapTaskStatusToRequestStatus(taskStatus: string): 'pending' | 'approved' | 'rejected' | 'in-progress' {
+  private static mapTaskStatusToRequestStatus(taskStatus: string): 'pending' | 'approved' | 'rejected' | 'in-progress' | 'completed' {
     switch (taskStatus) {
       case 'requested':
       case 'received':
         return 'pending';
       case 'accepted':
-      case 'completed':
         return 'approved';
+      case 'completed':
+        return 'completed';
       case 'rejected':
         return 'rejected';
       case 'in_progress(Anfragender)':

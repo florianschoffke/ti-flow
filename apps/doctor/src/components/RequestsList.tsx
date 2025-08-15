@@ -122,6 +122,7 @@ export function RequestsList({ onPrescriptionCreated }: RequestsListProps) {
           // Map KVNR to patient ID
           const patientMap: Record<string, string> = {
             'A123456789': 'pat-001',
+            'K220635158': 'pat-004',
             'B987654321': 'pat-002', 
             'C456789123': 'pat-003'
           };
@@ -134,9 +135,68 @@ export function RequestsList({ onPrescriptionCreated }: RequestsListProps) {
         
         setPrescriptionPrefill({ ...prefillData, taskId: request.taskId });
         setShowPrescriptionModal(true);
+        // Close the details view when opening the modal
+        setShowDetails(false);
       }
     } catch (error) {
       console.error('Failed to accept request:', error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCreatePrescription = async (request: DoctorRequest) => {
+    if (!request.taskId) return;
+    
+    setActionLoading(true);
+    try {
+      // Load the questionnaire response to get the medication data for approved tasks
+      const response = await DoctorFlowService.getQuestionnaireResponse(request.taskId);
+      
+      let prefillData: any = {};
+      if (response) {
+        // Extract medication group data
+        const medicationGroup = response.item.find(item => item.linkId === 'change_request') as any;
+        
+        if (medicationGroup && medicationGroup.item) {
+          const medication = medicationGroup.item.find((item: any) => item.linkId === 'medication');
+          const pzn = medicationGroup.item.find((item: any) => item.linkId === 'pzn');
+          const dosage = medicationGroup.item.find((item: any) => item.linkId === 'dosage');
+          const packages = medicationGroup.item.find((item: any) => item.linkId === 'packages');
+          
+          prefillData = {
+            medication: medication?.answer?.[0]?.valueString || '',
+            pzn: pzn?.answer?.[0]?.valueInteger || '',
+            dosage: dosage?.answer?.[0]?.valueString || '',
+            packages: packages?.answer?.[0]?.valueInteger || ''
+          };
+        }
+        
+        // Find patient by KVNR
+        const patientKvnr = response.item.find(item => item.linkId === 'patient_kvnr')?.answer?.[0]?.valueString;
+        if (patientKvnr) {
+          // Map KVNR to patient ID
+          const patientMap: Record<string, string> = {
+            'A123456789': 'pat-001',
+            'K220635158': 'pat-004',
+            'B987654321': 'pat-002', 
+            'C456789123': 'pat-003'
+          };
+          
+          prefillData = {
+            ...prefillData,
+            patientId: patientMap[patientKvnr] || ''
+          };
+        }
+      }
+      
+      setPrescriptionPrefill({ ...prefillData, taskId: request.taskId });
+      setShowPrescriptionModal(true);
+    } catch (error) {
+      console.error('Failed to load prescription data:', error);
+      // If we can't load data, still open the modal with default values
+      setPrescriptionPrefill({ taskId: request.taskId });
+      setShowPrescriptionModal(true);
     } finally {
       setActionLoading(false);
     }
@@ -222,6 +282,7 @@ export function RequestsList({ onPrescriptionCreated }: RequestsListProps) {
       case 'approved': return '#10b981';
       case 'rejected': return '#ef4444';
       case 'in-progress': return '#3b82f6';
+      case 'completed': return '#6b7280';
       default: return '#6b7280';
     }
   };
@@ -232,6 +293,7 @@ export function RequestsList({ onPrescriptionCreated }: RequestsListProps) {
       case 'approved': return 'Genehmigt';
       case 'rejected': return 'Abgelehnt';
       case 'in-progress': return 'In Bearbeitung';
+      case 'completed': return 'Abgeschlossen';
       default: return status;
     }
   };
@@ -374,24 +436,15 @@ export function RequestsList({ onPrescriptionCreated }: RequestsListProps) {
                 >
                   👀 Details ansehen
                 </button>
-                
-                {request.status === 'pending' && (
-                  <>
-                    <button 
-                      onClick={() => handleAccept(request)}
-                      disabled={actionLoading}
-                      className="quick-accept-button"
-                    >
-                      ✅ Annehmen
-                    </button>
-                    <button 
-                      onClick={() => handleReject(request)}
-                      disabled={actionLoading}
-                      className="quick-reject-button"
-                    >
-                      ❌ Ablehnen
-                    </button>
-                  </>
+                {request.status === 'approved' && (
+                  <button 
+                    onClick={() => handleCreatePrescription(request)}
+                    disabled={actionLoading}
+                    className="accept-button"
+                    style={{ marginLeft: '8px' }}
+                  >
+                    {actionLoading ? 'Wird bearbeitet...' : '📝 E-Rezept erstellen'}
+                  </button>
                 )}
               </div>
             </div>

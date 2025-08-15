@@ -310,6 +310,16 @@ export interface FlowTask {
       reference: string;
     };
   }>;
+  output?: Array<{
+    type: {
+      text: string;
+    };
+    valueReference?: {
+      reference: string;
+      display: string;
+    };
+    valueString?: string;
+  }>;
 }
 
 export interface FlowQuestionnaire {

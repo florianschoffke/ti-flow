@@ -279,7 +279,9 @@ export function ActiveRequestsList({ onRequestSubmitted }: ActiveRequestsListPro
         </div>
       ) : (
         <div className="requests-list">
-          {activeRequests.map(request => (
+          {activeRequests.map(request => {
+            console.log('🔍 Request data:', request.id, 'Status:', request.status, 'Full request:', request);
+            return (
             <div key={request.id} className="request-card">
               <div className="request-header">
                 <h3>{request.type}</h3>
@@ -294,6 +296,7 @@ export function ActiveRequestsList({ onRequestSubmitted }: ActiveRequestsListPro
               <div className="request-info">
                 <p><strong>ID:</strong> {request.id}</p>
                 <p><strong>Art:</strong> {request.kind}</p>
+                <p><strong>Status (Debug):</strong> {request.status}</p>
                 <p><strong>Erstellt:</strong> {new Date(request.requestDate).toLocaleString()}</p>
                 <p><strong>Letzte Aktualisierung:</strong> {new Date(request.lastUpdated).toLocaleString()}</p>
               </div>
@@ -325,17 +328,39 @@ export function ActiveRequestsList({ onRequestSubmitted }: ActiveRequestsListPro
                   </>
                 )}
                 
-                {request.status === 'completed' && request.documentData && (
+                {/* Debug: Show button for ALL requests */}
+                <button 
+                  onClick={() => {
+                    alert(`Status: "${request.status}" (type: ${typeof request.status})\nRequest ID: ${request.id}`);
+                    console.log('Full request object:', request);
+                  }}
+                  className="view-results-button"
+                  style={{ backgroundColor: '#ff9800' }}
+                >
+                  🔍 Debug: Status = {request.status}
+                </button>
+                
+                {request.status === 'completed' && (
                   <button 
                     onClick={() => handleViewResults(request)}
                     className="view-results-button"
                   >
-                    📋 Ergebnis ansehen
+                    📋 Ergebnis anzeigen
                   </button>
                 )}
+                
+                {/* Debug button - always show for testing */}
+                <button 
+                  onClick={() => console.log('Debug: Request status is:', request.status, typeof request.status)}
+                  className="view-button"
+                  style={{ backgroundColor: '#ff9800', marginTop: '4px' }}
+                >
+                  🐛 Debug Status
+                </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -344,28 +369,28 @@ export function ActiveRequestsList({ onRequestSubmitted }: ActiveRequestsListPro
         <div className="modal-backdrop" onClick={() => setShowResults(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>📋 Rezept-Ergebnis</h2>
+              <h2>📋 E-Rezept-Ergebnis</h2>
               <button onClick={() => setShowResults(false)} className="close-button">✕</button>
             </div>
             
             <div className="modal-body">
               <div className="result-info">
-                <h3>Rezept wurde erfolgreich erstellt</h3>
+                <h3>E-Rezept erstellt</h3>
                 <p><strong>Anfrage:</strong> {selectedRequest.type}</p>
                 <p><strong>Status:</strong> {getStatusText(selectedRequest.status)}</p>
                 <p><strong>Abgeschlossen:</strong> {new Date(selectedRequest.lastUpdated).toLocaleString()}</p>
               </div>
               
-              {selectedRequest.documentData && (
+              {selectedRequest.documentData ? (
                 <div className="prescription-data">
-                  <h4>📄 Rezept-Daten</h4>
+                  <h4>📄 E-Rezept-Daten</h4>
                   <div className="data-field">
                     <label>Dokument-ID:</label>
                     <code>{selectedRequest.documentData.docId}</code>
                   </div>
                   <div className="data-field">
                     <label>Zugangscode:</label>
-                    <code>{selectedRequest.documentData.docPw.substring(0, 3)}***</code>
+                    <code>{selectedRequest.documentData.docPw}</code>
                   </div>
                   
                   <div className="download-section">
@@ -374,15 +399,19 @@ export function ActiveRequestsList({ onRequestSubmitted }: ActiveRequestsListPro
                       disabled={downloadLoading}
                       className="download-button"
                     >
-                      {downloadLoading ? '⏳ Lädt...' : '📥 Rezept herunterladen'}
+                      {downloadLoading ? '⏳ Lädt...' : '📥 E-Rezept laden'}
                     </button>
                     
                     {downloadSuccess && (
                       <div className="success-message">
-                        ✅ Rezept erfolgreich heruntergeladen!
+                        ✅ E-Rezept erfolgreich geladen!
                       </div>
                     )}
                   </div>
+                </div>
+              ) : (
+                <div className="no-document-data">
+                  <p>ℹ️ E-Rezept-Daten sind noch nicht verfügbar oder konnten nicht geladen werden.</p>
                 </div>
               )}
             </div>

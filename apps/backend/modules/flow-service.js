@@ -393,17 +393,36 @@ class FlowService {
    * Close/Complete task
    */
   closeTask(taskId, docData, actor) {
+    console.log('🔄 closeTask called:');
+    console.log('📋 taskId:', taskId);
+    console.log('📄 docData:', docData);
+    console.log('👤 actor:', actor);
+    
     const task = this.getTask(taskId);
+    console.log('📋 Current task:', task);
+    
     if (!task || task.status !== TASK_STATUS.ACCEPTED) {
+      console.log('❌ Task not found or not in accepted status');
+      console.log('   Task exists:', !!task);
+      console.log('   Task status:', task?.status);
+      console.log('   Required status:', TASK_STATUS.ACCEPTED);
       return null;
     }
 
     const db = this.loadDatabase();
     
+    console.log('💾 Storing document data...');
     // Store document data with the task in the database
     db.tasks[taskId].documentData = docData;
     
+    // Save the database after adding documentData
+    this.saveDatabase(db);
+    
+    console.log('💾 Database after storing docData:', db.tasks[taskId]);
+    
     const updatedTask = this.updateTaskStatus(taskId, TASK_STATUS.COMPLETED, actor);
+    
+    console.log('✅ Final updated task:', updatedTask);
     
     return updatedTask;
   }
@@ -473,6 +492,18 @@ class FlowService {
             reference: `DocumentReference/${task.documentData.docId}`,
             display: task.documentData.docPw
           }
+        },
+        {
+          type: {
+            text: "prescription-id"
+          },
+          valueString: task.documentData.docId
+        },
+        {
+          type: {
+            text: "prescription-secret"
+          },
+          valueString: task.documentData.docPw
         }
       ];
     }
@@ -884,7 +915,15 @@ export function setupFlowService(app, registerEndpoint) {
       const { docId, docPw } = req.body;
       const actor = req.headers['x-actor-id']; // Actor identification
       
+      console.log('🔄 $close endpoint called:');
+      console.log('📋 taskId:', taskId);
+      console.log('📦 req.body:', req.body);
+      console.log('👤 actor:', actor);
+      console.log('🆔 docId:', docId);
+      console.log('🔐 docPw:', docPw);
+      
       if (!docId || !docPw) {
+        console.log('❌ Missing docId or docPw');
         return res.status(400).json({
           error: 'Missing required fields',
           message: 'docId and docPw are required to close the task'
@@ -892,6 +931,7 @@ export function setupFlowService(app, registerEndpoint) {
       }
 
       if (!actor) {
+        console.log('❌ Missing actor');
         return res.status(400).json({
           error: 'Missing actor identification',
           message: 'x-actor-id header is required'
@@ -899,21 +939,26 @@ export function setupFlowService(app, registerEndpoint) {
       }
 
       const documentData = { docId, docPw };
+      console.log('📄 documentData to be stored:', documentData);
+      
       const updatedTask = flowService.closeTask(taskId, documentData, actor);
       
       if (!updatedTask) {
+        console.log('❌ closeTask returned null');
         return res.status(400).json({
           error: 'Invalid operation',
           message: 'Cannot close this task in current state'
         });
       }
 
+      console.log('✅ Task closed successfully:', updatedTask);
+      
       res.json({
         message: 'Task completed successfully',
         task: flowService.toFhirTask(updatedTask)
       });
     } catch (error) {
-      console.error('Error closing task:', error);
+      console.error('❌ Error closing task:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   });

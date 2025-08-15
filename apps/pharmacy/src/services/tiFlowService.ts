@@ -55,7 +55,9 @@ export class TiFlowService {
   // Get all tasks for the current user
   static async getTasksForUser(user: string = 'pharmacy-app'): Promise<any[]> {
     const response = await this.fetchWithAuth(`${BASE_URL}/Task?user=${user}`);
-    return response.entry?.map((entry: any) => entry.resource) || [];
+    const tasks = response.entry?.map((entry: any) => entry.resource) || [];
+    console.log('🔍 TiFlowService tasks received:', tasks);
+    return tasks;
   }
 
   // Get a questionnaire by ID
@@ -402,16 +404,21 @@ export class TiFlowService {
               // Extract document data from completed tasks
               let documentData = undefined;
               if (task.status === 'completed' && task.output) {
+                console.log('🔍 Task output for completed task:', task.id, task.output);
                 const docOutput = task.output.find((output: any) => 
                   output.type?.text === 'document-data'
                 );
+                console.log('📄 Found document output:', docOutput);
                 if (docOutput?.valueReference) {
                   const docId = docOutput.valueReference.reference?.replace('DocumentReference/', '');
                   const docPw = docOutput.valueReference.display;
+                  console.log('📝 Extracted doc data:', { docId, docPw });
                   if (docId && docPw) {
                     documentData = { docId, docPw };
                   }
                 }
+              } else if (task.status === 'completed') {
+                console.log('⚠️ Completed task without output:', task.id, 'Task data:', task);
               }
 
               activeRequests.push({

@@ -10,6 +10,8 @@ export function TaskList() {
   const [error, setError] = useState<string | null>(null);
   const [selectedQuestionnaireResponse, setSelectedQuestionnaireResponse] = useState<QuestionnaireResponse | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<FlowTask | null>(null);
 
   useEffect(() => {
     loadTasks();
@@ -46,6 +48,11 @@ export function TaskList() {
       console.error('Failed to load questionnaire response:', err);
       setError('Failed to load questionnaire response details');
     }
+  };
+
+  const handleViewResults = (task: FlowTask) => {
+    setSelectedTask(task);
+    setShowResults(true);
   };
 
   const closeModal = () => {
@@ -140,6 +147,16 @@ export function TaskList() {
                 >
                   📋 Anfragedetails
                 </button>
+                
+                {task.status === 'completed' && (
+                  <button 
+                    onClick={() => handleViewResults(task)}
+                    className="view-results-button"
+                    style={{ marginLeft: '8px' }}
+                  >
+                    📋 Ergebnis anzeigen
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -161,6 +178,82 @@ export function TaskList() {
                 questionnaireResponse={selectedQuestionnaireResponse}
                 onClose={closeModal}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal for showing results */}
+      {showResults && selectedTask && (
+        <div className="modal-overlay" onClick={() => setShowResults(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📋 E-Rezept-Ergebnis</h2>
+              <button onClick={() => setShowResults(false)} className="close-btn">
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="result-info">
+                <h3>E-Rezept erstellt</h3>
+                <p><strong>Aufgabe:</strong> {selectedTask.description}</p>
+                <p><strong>Status:</strong> {selectedTask.businessStatus.text}</p>
+                <p><strong>Abgeschlossen:</strong> {formatDate(selectedTask.lastModified)}</p>
+              </div>
+              
+              {selectedTask.output ? (
+                <div className="prescription-data">
+                  <h4>📄 E-Rezept-Daten</h4>
+                  {(() => {
+                    // Extract prescription data from task output
+                    console.log('🔍 Debugging task output:', selectedTask.output);
+                    const prescriptionIdOutput = selectedTask.output.find((output: any) => 
+                      output.type?.text === 'prescription-id'
+                    );
+                    const prescriptionSecretOutput = selectedTask.output.find((output: any) => 
+                      output.type?.text === 'prescription-secret'
+                    );
+                    
+                    console.log('🆔 prescriptionIdOutput:', prescriptionIdOutput);
+                    console.log('🔐 prescriptionSecretOutput:', prescriptionSecretOutput);
+                    
+                    if (prescriptionIdOutput?.valueString && prescriptionSecretOutput?.valueString) {
+                      const prescriptionId = prescriptionIdOutput.valueString;
+                      const prescriptionSecret = prescriptionSecretOutput.valueString;
+                      const maskedSecret = '*'.repeat(prescriptionSecret.length);
+                      
+                      return (
+                        <>
+                          <div className="data-field">
+                            <label>E-Rezept-ID:</label>
+                            <code>{prescriptionId}</code>
+                          </div>
+                          <div className="data-field">
+                            <label>Zugangscode:</label>
+                            <code>{maskedSecret}</code>
+                          </div>
+                          <div className="download-section">
+                            <button 
+                              onClick={() => {
+                                // TODO: Implement e-prescription retrieval functionality
+                                alert(`E-Rezept wird abgerufen:\nID: ${prescriptionId}\nSecret: ${prescriptionSecret}`);
+                              }}
+                              className="download-button"
+                            >
+                              � E-Rezept abrufen
+                            </button>
+                          </div>
+                        </>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              ) : (
+                <div className="no-document-data">
+                  <p>ℹ️ E-Rezept-Daten sind noch nicht verfügbar oder konnten nicht geladen werden.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

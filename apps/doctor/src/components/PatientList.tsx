@@ -1,49 +1,13 @@
 import { useState, useEffect } from 'react';
-
-interface Patient {
-  id: string;
-  name: string;
-  birthDate: string;
-  insuranceNumber: string;
-  address: string;
-}
+import { PatientService, type Patient } from '../services/patientService';
 
 export function PatientList() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
   useEffect(() => {
-    // Mock patient data
-    setPatients([
-      {
-        id: 'pat-001',
-        name: 'Anna Müller',
-        birthDate: '1985-03-15',
-        insuranceNumber: 'A123456789',
-        address: 'Musterstraße 123, 12345 Berlin'
-      },
-      {
-        id: 'pat-004',
-        name: 'Ludger Königsstein',
-        birthDate: '1985-03-15',
-        insuranceNumber: 'K220635158',
-        address: 'Holzweg 123, 12345 Berlin'
-      },
-      {
-        id: 'pat-002',
-        name: 'Hans Schmidt',
-        birthDate: '1975-08-22',
-        insuranceNumber: 'B987654321',
-        address: 'Beispielweg 456, 54321 Hamburg'
-      },
-      {
-        id: 'pat-003',
-        name: 'Maria Weber',
-        birthDate: '1990-12-05',
-        insuranceNumber: 'C456789123',
-        address: 'Testplatz 789, 98765 München'
-      }
-    ]);
+    // Load mock patients from service
+    setPatients(PatientService.getMockPatients());
   }, []);
 
   return (
