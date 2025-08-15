@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import './App.css';
-import { PrescriptionForm } from './components/PrescriptionForm';
 import { RequestsList } from './components/RequestsList';
 import { DoctorInfoService } from './services/doctorInfoService';
 
@@ -32,11 +31,7 @@ export default function App() {
 
       <main className="main-content">
         <div className="content-section">
-          <PrescriptionForm onPrescriptionCreated={handleRequestSubmitted} />
-        </div>
-        
-        <div className="content-section">
-          <RequestsList key={refreshRequests} />
+          <RequestsList key={refreshRequests} onPrescriptionCreated={handleRequestSubmitted} />
         </div>
       </main>
     </div>

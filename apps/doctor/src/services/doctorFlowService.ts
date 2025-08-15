@@ -51,6 +51,23 @@ export interface DoctorFlowQuestionnaire {
   created?: string;
 }
 
+export interface DoctorFlowQuestionnaireResponse {
+  resourceType: 'QuestionnaireResponse';
+  id: string;
+  status: string;
+  authored: string;
+  questionnaire: string;
+  item: Array<{
+    linkId: string;
+    text: string;
+    answer?: Array<{
+      valueString?: string;
+      valueInteger?: number;
+      valueDate?: string;
+    }>;
+  }>;
+}
+
 export interface DoctorRequest {
   id: string;
   type: string;
@@ -92,9 +109,25 @@ export class DoctorFlowService {
     return response.json();
   }
 
+  // Get a questionnaire response by ID
+  static async getQuestionnaireResponse(questionnaireResponseId: string): Promise<DoctorFlowQuestionnaireResponse> {
+    const response = await fetch(`${API_BASE_URL}/QuestionnaireResponse/${questionnaireResponseId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-actor-id': 'doctor-app'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to get questionnaire response: ${response.statusText}`);
+    }
+    
+    return response.json();
+  }
+
   // Accept a task
   static async acceptTask(taskId: string): Promise<DoctorFlowTask> {
-    const response = await fetch(`${API_BASE_URL}/${taskId}/\\$accept`, {
+    const response = await fetch(`${API_BASE_URL}/Task/${taskId}/$accept`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -149,14 +182,18 @@ export class DoctorFlowService {
     return result.task;
   }
 
-  // Close a task
-  static async closeTask(taskId: string): Promise<DoctorFlowTask> {
-    const response = await fetch(`${API_BASE_URL}/${taskId}/\\$close`, {
+  // Close a task with prescription data
+  static async closeTask(taskId: string, prescriptionData: { prescriptionId: string; secret: string }): Promise<DoctorFlowTask> {
+    const response = await fetch(`${API_BASE_URL}/Task/${taskId}/$close`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-actor-id': 'doctor-app'
-      }
+      },
+      body: JSON.stringify({
+        docId: prescriptionData.prescriptionId,
+        docPw: prescriptionData.secret
+      })
     });
 
     if (!response.ok) {
@@ -267,13 +304,18 @@ export class DoctorFlowService {
     }
   }
 
-  // Create prescription (placeholder for future implementation)
-  static async createPrescription(patientData: any, medicationData: any): Promise<{ success: boolean; prescriptionId?: string }> {
-    // This would integrate with the prescription system
-    // For now, return a mock response
+  // Mock prescription creation service
+  static async createEPrescription(formData: any): Promise<{ prescriptionId: string; secret: string }> {
+    // Mock API call to e-prescription service
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
+    
+    // Generate mock prescription ID and secret (UUIDs)
+    const prescriptionId = `RX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    const secret = crypto.randomUUID();
+    
     return {
-      success: true,
-      prescriptionId: `RX-${Date.now()}`
+      prescriptionId,
+      secret
     };
   }
 }

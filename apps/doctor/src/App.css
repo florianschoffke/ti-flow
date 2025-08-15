@@ -514,6 +514,147 @@
   font-size: 0.9em;
 }
 
+.questionnaire-group {
+  background: white;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  border-left: 3px solid #3b82f6;
+}
+
+.group-title {
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+  font-size: 1em;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.group-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group-items .questionnaire-item {
+  margin: 0;
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.prescription-result {
+  padding: 20px;
+}
+
+.result-section {
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.result-section h4 {
+  margin: 0 0 16px 0;
+  color: #0369a1;
+  font-size: 1.1rem;
+}
+
+.prescription-details {
+  background: white;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #e0f2fe;
+}
+
+.prescription-details p {
+  margin: 8px 0;
+  color: #1e40af;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 0.9rem;
+}
+
+.close-task-btn {
+  width: 100%;
+  background: #059669;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.close-task-btn:hover:not(:disabled) {
+  background: #047857;
+}
+
+.close-task-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .action-buttons {
   display: flex;
   gap: 12px;

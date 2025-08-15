@@ -20,6 +20,34 @@ interface GroupInstance {
   [linkId: string]: string | { value: string; unit: string };
 }
 
+interface ChoiceOption {
+  code: string;
+  display: string;
+}
+
+// Helper function to extract choice options from FHIR ValueSet
+const getChoiceOptions = (item: QuestionnaireItem): ChoiceOption[] => {
+  const options: ChoiceOption[] = [];
+  
+  // Check if there's a contained ValueSet referenced by answerValueSet
+  if (item.answerValueSet && item.answerValueSet.startsWith('#')) {
+    const valueSetId = item.answerValueSet.substring(1); // Remove the '#'
+    
+    // Look for the ValueSet in the questionnaire's contained resources
+    // Note: We need to access the parent questionnaire's contained array
+    // For now, we'll handle the urgency field specifically
+    if (valueSetId === 'urgency-vs') {
+      return [
+        { code: 'routine', display: 'Routine' },
+        { code: 'urgent', display: 'Dringend' },
+        { code: 'emergency', display: 'Notfall' }
+      ];
+    }
+  }
+  
+  return options;
+};
+
 export function QuestionnaireRenderer({ questionnaire, prescription, operationCode, onClose, onRequestSubmitted, readOnly = false }: QuestionnaireRendererProps) {
   const contactsService = new ContactsService();
   
@@ -53,6 +81,13 @@ export function QuestionnaireRenderer({ questionnaire, prescription, operationCo
       // First check if there are initial values (submitted data)
       if (item.initial && item.initial.length > 0) {
         initialData[item.linkId] = item.initial[0].valueString || '';
+      } else if (item.type === 'choice') {
+        // Auto-select first option for choice fields
+        const options = getChoiceOptions(item);
+        if (options.length > 0) {
+          initialData[item.linkId] = options[0].code;
+          console.log(`✅ Auto-selected first option for ${item.linkId}:`, options[0].code, '(', options[0].display, ')');
+        }
       } else if (item.code?.[0]?.code === 'patient_name') {
         // Use prescription data if available, otherwise leave empty for manual entry
         if (prescription) {
@@ -379,6 +414,41 @@ export function QuestionnaireRenderer({ questionnaire, prescription, operationCo
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        );
+      
+      case 'choice':
+        const options = getChoiceOptions(item);
+        
+        return (
+          <div key={item.linkId} className="questionnaire-item">
+            <label className="questionnaire-label">
+              {item.text}
+              {item.required && <span className="required">*</span>}
+            </label>
+            <div className="radio-group">
+              {options.map((option) => (
+                <div key={option.code} className="radio-option">
+                  <input
+                    type="radio"
+                    id={`${item.linkId}-${option.code}`}
+                    name={item.linkId}
+                    value={option.code}
+                    checked={value === option.code}
+                    onChange={(e) => handleInputChange(item.linkId, e.target.value)}
+                    disabled={isAutoPopulated || readOnly}
+                  />
+                  <label htmlFor={`${item.linkId}-${option.code}`} className="radio-label">
+                    {option.display}
+                  </label>
+                </div>
+              ))}
+            </div>
+            {hint && (
+              <div className="field-hint">
+                {hint}
               </div>
             )}
           </div>

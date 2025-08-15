@@ -23,6 +23,13 @@ export function PatientList() {
         address: 'Musterstraße 123, 12345 Berlin'
       },
       {
+        id: 'pat-004',
+        name: 'Ludger Königsstein',
+        birthDate: '1985-03-15',
+        insuranceNumber: 'K220635158',
+        address: 'Holzweg 123, 12345 Berlin'
+      },
+      {
         id: 'pat-002',
         name: 'Hans Schmidt',
         birthDate: '1975-08-22',

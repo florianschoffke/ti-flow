@@ -400,12 +400,11 @@ class FlowService {
 
     const db = this.loadDatabase();
     
-    // Store document data with the task
-    task.documentData = docData;
+    // Store document data with the task in the database
+    db.tasks[taskId].documentData = docData;
     
     const updatedTask = this.updateTaskStatus(taskId, TASK_STATUS.COMPLETED, actor);
     
-    this.saveDatabase(db);
     return updatedTask;
   }
 
@@ -430,7 +429,7 @@ class FlowService {
       return `Organization/${value}`;
     };
 
-    return {
+    const fhirTask = {
       resourceType: "Task",
       id: task.id,
       status: this.mapStatusToFhir(task.status),
@@ -462,6 +461,23 @@ class FlowService {
         }
       ]
     };
+
+    // Add document data as output when task is completed
+    if (task.status === TASK_STATUS.COMPLETED && task.documentData) {
+      fhirTask.output = [
+        {
+          type: {
+            text: "document-data"
+          },
+          valueReference: {
+            reference: `DocumentReference/${task.documentData.docId}`,
+            display: task.documentData.docPw
+          }
+        }
+      ];
+    }
+
+    return fhirTask;
   }
 
   /**
@@ -517,7 +533,19 @@ export function setupFlowService(app, registerEndpoint) {
       }
 
       const tasks = flowService.getTasksForUser(user);
-      const fhirTasks = tasks.map(task => flowService.toFhirTask(task));
+      
+      // Mark tasks as received if this is the first time the receiver accesses them
+      const updatedTasks = tasks.map(task => {
+        if (task.status === TASK_STATUS.REQUESTED && 
+            (task.receiver === user || task.receiver === `Organization/${user}`)) {
+          console.log(`📥 Marking task ${task.id} as received by ${user}`);
+          flowService.markAsReceived(task.id, user);
+          return { ...task, status: TASK_STATUS.RECEIVED, updated: new Date().toISOString() };
+        }
+        return task;
+      });
+      
+      const fhirTasks = updatedTasks.map(task => flowService.toFhirTask(task));
       
       res.json({
         resourceType: 'Bundle',
@@ -548,11 +576,13 @@ export function setupFlowService(app, registerEndpoint) {
 
       // Mark as received if this is the first time the receiver accesses it
       if (task.status === TASK_STATUS.REQUESTED) {
-        // In a real implementation, you'd identify the requester from auth headers
-        // For now, we'll check if the request is from the receiver
-        const receiverHeader = req.headers['x-actor-id'];
-        if (receiverHeader === task.receiver) {
-          flowService.markAsReceived(taskId, task.receiver);
+        // Check if the request is from the receiver using the same logic as getTasksForUser
+        const actorId = req.headers['x-actor-id'];
+        const user = req.query.user || actorId; // Allow user param or fall back to actor-id
+        
+        if (user && (task.receiver === user || task.receiver === `Organization/${user}`)) {
+          console.log(`📥 Marking task ${taskId} as received by ${user}`);
+          flowService.markAsReceived(taskId, user);
           task.status = TASK_STATUS.RECEIVED;
           task.updated = new Date().toISOString();
         }
@@ -816,7 +846,7 @@ export function setupFlowService(app, registerEndpoint) {
   });
 
   // POST /:id/$accept - Accept request
-  app.post('/Task/:id/$accept', (req, res) => {
+  app.post('/Task/:id/\\$accept', (req, res) => {
     try {
       const taskId = req.params.id;
       const actor = req.headers['x-actor-id']; // Actor identification
@@ -848,7 +878,7 @@ export function setupFlowService(app, registerEndpoint) {
   });
 
   // POST /:id/$close - Close/Complete request
-  app.post('/Task/:id/$close', (req, res) => {
+  app.post('/Task/:id/\\$close', (req, res) => {
     try {
       const taskId = req.params.id;
       const { docId, docPw } = req.body;

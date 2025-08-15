@@ -333,6 +333,19 @@ class InformationService {
       text: item.text
     };
 
+    // Handle group items (items with nested items)
+    if (item.item && item.item.length > 0) {
+      responseItem.item = [];
+      for (const subItem of item.item) {
+        const responseSubItem = this.populateItem(subItem, fhirBundle);
+        if (responseSubItem) {
+          responseItem.item.push(responseSubItem);
+        }
+      }
+      return responseItem;
+    }
+
+    // Handle regular items with initialExpressions
     // Look for initialExpression extension
     const initialExpression = item.extension?.find(ext => 
       ext.url === 'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression'

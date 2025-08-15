@@ -199,6 +199,7 @@ export interface QuestionnaireItem {
   required?: boolean;
   repeats?: boolean;
   item?: QuestionnaireItem[];
+  answerValueSet?: string; // Reference to a ValueSet for choice options
   initial?: Array<{
     valueString?: string;
     valueInteger?: number;
@@ -267,6 +268,12 @@ export interface ActiveRequest {
   status: string;
   requestDate: string;
   lastUpdated: string;
+  requesterName?: string;
+  description?: string;
+  documentData?: {
+    docId: string;
+    docPw: string;
+  };
 }
 
 export interface RequestDetails extends ActiveRequest {

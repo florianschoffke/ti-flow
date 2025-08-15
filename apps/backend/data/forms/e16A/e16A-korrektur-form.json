@@ -213,7 +213,7 @@
             }
           ],
           "text": "Gewünschter Medikamentenname",
-          "required": true
+          "required": false
         },
         {
           "type": "integer",

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { ActiveRequest, RequestDetails } from '../types';
 import { TiFlowService } from '../services/tiFlowService';
-import { QuestionnaireRenderer } from './QuestionnaireRenderer';
+// import { QuestionnaireRenderer } from './QuestionnaireRenderer'; // TODO: Update to use QuestionnaireResponseViewer
 
 interface ActiveRequestsListProps {
   onRequestSubmitted?: () => void;
@@ -14,6 +14,10 @@ export function ActiveRequestsList({ onRequestSubmitted }: ActiveRequestsListPro
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [viewingRequest, setViewingRequest] = useState<RequestDetails | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<ActiveRequest | null>(null);
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   const loadActiveRequests = async () => {
     try {
@@ -113,6 +117,27 @@ export function ActiveRequestsList({ onRequestSubmitted }: ActiveRequestsListPro
     }
   };
 
+  const handleViewResults = (request: ActiveRequest) => {
+    setSelectedRequest(request);
+    setShowResults(true);
+  };
+
+  const handleDownloadPrescription = async () => {
+    if (!selectedRequest?.documentData) return;
+    
+    setDownloadLoading(true);
+    try {
+      await TiFlowService.downloadPrescription(selectedRequest.documentData.docId, selectedRequest.documentData.docPw);
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 3000);
+    } catch (err) {
+      console.error('Failed to download prescription:', err);
+      setError('Fehler beim Herunterladen des Rezepts');
+    } finally {
+      setDownloadLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadActiveRequests();
   }, []);
@@ -170,6 +195,12 @@ export function ActiveRequestsList({ onRequestSubmitted }: ActiveRequestsListPro
 
           {viewingRequest.questionnaireResponse && (
             <div className="questionnaire-container">
+              {/* TODO: Replace with QuestionnaireResponseViewer */}
+              <div className="questionnaire-placeholder">
+                <p>🚧 Questionnaire display will be updated to use QuestionnaireResponseViewer</p>
+                <pre>{JSON.stringify(viewingRequest.questionnaireResponse, null, 2)}</pre>
+              </div>
+              {/* 
               <QuestionnaireRenderer 
                 questionnaire={{
                   resourceType: 'Questionnaire',
@@ -183,11 +214,11 @@ export function ActiveRequestsList({ onRequestSubmitted }: ActiveRequestsListPro
                     }
                   ]
                 }}
-                prescription={null}
-                operationCode=""
-                onClose={() => setShowQuestionnaire(false)}
+                questionnaireResponse={viewingRequest.questionnaireResponse}
+                onClose={() => {}}
                 onRequestSubmitted={onRequestSubmitted}
               />
+              */}
             </div>
           )}
 
@@ -293,9 +324,69 @@ export function ActiveRequestsList({ onRequestSubmitted }: ActiveRequestsListPro
                     </button>
                   </>
                 )}
+                
+                {request.status === 'completed' && request.documentData && (
+                  <button 
+                    onClick={() => handleViewResults(request)}
+                    className="view-results-button"
+                  >
+                    📋 Ergebnis ansehen
+                  </button>
+                )}
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Results Modal */}
+      {showResults && selectedRequest && (
+        <div className="modal-backdrop" onClick={() => setShowResults(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📋 Rezept-Ergebnis</h2>
+              <button onClick={() => setShowResults(false)} className="close-button">✕</button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="result-info">
+                <h3>Rezept wurde erfolgreich erstellt</h3>
+                <p><strong>Anfrage:</strong> {selectedRequest.type}</p>
+                <p><strong>Status:</strong> {getStatusText(selectedRequest.status)}</p>
+                <p><strong>Abgeschlossen:</strong> {new Date(selectedRequest.lastUpdated).toLocaleString()}</p>
+              </div>
+              
+              {selectedRequest.documentData && (
+                <div className="prescription-data">
+                  <h4>📄 Rezept-Daten</h4>
+                  <div className="data-field">
+                    <label>Dokument-ID:</label>
+                    <code>{selectedRequest.documentData.docId}</code>
+                  </div>
+                  <div className="data-field">
+                    <label>Zugangscode:</label>
+                    <code>{selectedRequest.documentData.docPw.substring(0, 3)}***</code>
+                  </div>
+                  
+                  <div className="download-section">
+                    <button 
+                      onClick={handleDownloadPrescription}
+                      disabled={downloadLoading}
+                      className="download-button"
+                    >
+                      {downloadLoading ? '⏳ Lädt...' : '📥 Rezept herunterladen'}
+                    </button>
+                    
+                    {downloadSuccess && (
+                      <div className="success-message">
+                        ✅ Rezept erfolgreich heruntergeladen!
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

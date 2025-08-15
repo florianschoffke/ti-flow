@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TiFlowService } from '../services/tiFlowService';
+import { PharmacyInfoService } from '../services/pharmacyInfoService';
 import { QuestionnaireResponseViewer } from './QuestionnaireResponseViewer';
 import type { FlowTask, QuestionnaireResponse } from '../types';
 
@@ -17,7 +18,7 @@ export function TaskList() {
   const loadTasks = async () => {
     try {
       setIsLoading(true);
-      const userTasks = await TiFlowService.getTasksForUser('1-AVS-12345678901');
+      const userTasks = await TiFlowService.getTasksForUser(PharmacyInfoService.getPharmacyTelematikId());
       setTasks(userTasks);
       setError(null);
     } catch (err) {
@@ -159,7 +160,6 @@ export function TaskList() {
               <QuestionnaireResponseViewer 
                 questionnaireResponse={selectedQuestionnaireResponse}
                 onClose={closeModal}
-                standalone={false}
               />
             </div>
           </div>

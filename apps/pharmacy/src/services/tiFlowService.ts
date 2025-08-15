@@ -398,7 +398,22 @@ export class TiFlowService {
             const receiverMatch = task.owner?.reference === `Organization/${pharmacyTelematikId}` ||
                                  task.for?.reference === `Organization/${pharmacyTelematikId}`;
             
-            if (receiverMatch && task.status !== 'completed' && task.status !== 'cancelled') {
+            if (receiverMatch && task.status !== 'cancelled') {
+              // Extract document data from completed tasks
+              let documentData = undefined;
+              if (task.status === 'completed' && task.output) {
+                const docOutput = task.output.find((output: any) => 
+                  output.type?.text === 'document-data'
+                );
+                if (docOutput?.valueReference) {
+                  const docId = docOutput.valueReference.reference?.replace('DocumentReference/', '');
+                  const docPw = docOutput.valueReference.display;
+                  if (docId && docPw) {
+                    documentData = { docId, docPw };
+                  }
+                }
+              }
+
               activeRequests.push({
                 id: task.id,
                 type: this.getTaskTypeFromCode(task.code) || 'Dokumentenanfrage',
@@ -407,7 +422,8 @@ export class TiFlowService {
                 requestDate: task.authoredOn || new Date().toISOString(),
                 lastUpdated: task.lastModified || task.authoredOn || new Date().toISOString(),
                 requesterName: this.getRequesterName(task.requester?.reference) || 'Unbekannt',
-                description: task.description || 'Dokumentenanfrage'
+                description: task.description || 'Dokumentenanfrage',
+                documentData // Include document data for completed tasks
               });
             }
           }
@@ -452,6 +468,19 @@ export class TiFlowService {
     if (questionnaireCanonical.includes('document-request')) return 'document-request';
     
     return 'flow-request'; // default;
+  }
+
+  // Mock prescription download service
+  static async downloadPrescription(prescriptionId: string, secret: string): Promise<{ success: boolean; message: string }> {
+    // Mock API call to e-prescription service
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
+    
+    console.log(`📥 Mock downloading prescription: ${prescriptionId}`);
+    
+    return {
+      success: true,
+      message: 'E-Rezept erfolgreich abgerufen'
+    };
   }
 
   // Get request details with questionnaire response

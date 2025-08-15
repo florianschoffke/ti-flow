@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { CodeSystemConcept, Questionnaire } from '../types';
 import { tiFlowService } from '../services/tiFlowService';
-import { QuestionnaireRenderer } from './QuestionnaireRenderer';
+// import { QuestionnaireRenderer } from './QuestionnaireRenderer'; // TODO: Update to use QuestionnaireResponseViewer
 
 interface RequestOperationsProps {
   availableRequests: CodeSystemConcept[];
@@ -101,13 +101,10 @@ export function RequestOperations({ availableRequests, isLoading, onRequestSubmi
       </div>
       
       {showQuestionnaire && currentQuestionnaire && (
-        <QuestionnaireRenderer
-          questionnaire={currentQuestionnaire}
-          prescription={null} // No prescription for requests
-          operationCode={currentRequestCode}
-          onClose={handleCloseQuestionnaire}
-          onRequestSubmitted={onRequestSubmitted}
-        />
+        <div className="questionnaire-placeholder">
+          <p>🚧 Request operations will be updated to use QuestionnaireResponseViewer</p>
+          <button onClick={handleCloseQuestionnaire}>Close</button>
+        </div>
       )}
     </>
   );

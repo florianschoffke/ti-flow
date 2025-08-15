@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import type { CodeSystemConcept, Prescription, Questionnaire, QuestionnaireResponse, FhirBundle } from '../types';
-import { QuestionnaireRenderer } from './QuestionnaireRenderer';
+import type { CodeSystemConcept, Prescription, QuestionnaireResponse, FhirBundle } from '../types';
 import { QuestionnaireResponseViewer } from './QuestionnaireResponseViewer';
 import TiFlowService from '../services/tiFlowService';
 
@@ -14,11 +13,8 @@ interface FlowOperationsDropdownProps {
 export function FlowOperationsDropdown({ prescription, availableOperations, fhirBundle, onRequestSubmitted }: FlowOperationsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [showQuestionnaireResponse, setShowQuestionnaireResponse] = useState(false);
-  const [currentQuestionnaire, setCurrentQuestionnaire] = useState<Questionnaire | null>(null);
   const [currentQuestionnaireResponse, setCurrentQuestionnaireResponse] = useState<QuestionnaireResponse | null>(null);
-  const [currentOperationCode, setCurrentOperationCode] = useState<string>('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -55,7 +51,6 @@ export function FlowOperationsDropdown({ prescription, availableOperations, fhir
           if (populatedResponse) {
             console.log('✅ Successfully populated questionnaire:', populatedResponse);
             setCurrentQuestionnaireResponse(populatedResponse);
-            setCurrentOperationCode(operation.code);
             setShowQuestionnaireResponse(true);
             return;
           } else {
@@ -65,39 +60,42 @@ export function FlowOperationsDropdown({ prescription, availableOperations, fhir
           console.warn('⚠️ Failed to populate questionnaire, falling back to basic form:', error);
         }
       } else {
-        console.log('ℹ️ No FHIR bundle available, using basic questionnaire');
+        console.log('ℹ️ No FHIR bundle available, creating basic questionnaire response');
       }
       
-      // Fallback: Create a basic questionnaire for this document operation
-      const questionnaire: Questionnaire = {
-        resourceType: 'Questionnaire',
-        title: operation.display || operation.code,
-        status: 'active',
+      // Fallback: Create a basic questionnaire response for this document operation
+      const questionnaireResponse: QuestionnaireResponse = {
+        resourceType: 'QuestionnaireResponse',
+        questionnaire: operation.display || operation.code,
+        status: 'in-progress',
         item: [
           {
-            linkId: 'prescription-id',
-            text: 'Rezept-ID',
-            type: 'string',
-            required: true
+            linkId: 'prescription_id',
+            answer: [{
+              valueString: prescription.id
+            }]
           },
           {
-            linkId: 'patient-id',
-            text: 'Patient-ID',
-            type: 'string',
-            required: true
+            linkId: 'patient_id',
+            answer: [{
+              valueString: prescription.patientId
+            }]
+          },
+          {
+            linkId: 'medication_name',
+            answer: [{
+              valueString: prescription.medication
+            }]
           },
           {
             linkId: 'description',
-            text: 'Beschreibung',
-            type: 'text',
-            required: false
+            answer: []
           }
         ]
       };
       
-      setCurrentQuestionnaire(questionnaire);
-      setCurrentOperationCode(operation.code);
-      setShowQuestionnaire(true);
+      setCurrentQuestionnaireResponse(questionnaireResponse);
+      setShowQuestionnaireResponse(true);
       
     } catch (error) {
       console.error('❌ Operation failed:', error);
@@ -107,16 +105,9 @@ export function FlowOperationsDropdown({ prescription, availableOperations, fhir
     }
   };
 
-  const handleCloseQuestionnaire = () => {
-    setShowQuestionnaire(false);
-    setCurrentQuestionnaire(null);
-    setCurrentOperationCode('');
-  };
-
   const handleCloseQuestionnaireResponse = () => {
     setShowQuestionnaireResponse(false);
     setCurrentQuestionnaireResponse(null);
-    setCurrentOperationCode('');
   };
 
   if (availableOperations.length === 0) {
@@ -154,16 +145,6 @@ export function FlowOperationsDropdown({ prescription, availableOperations, fhir
         )}
       </div>
       
-      {showQuestionnaire && currentQuestionnaire && (
-        <QuestionnaireRenderer
-          questionnaire={currentQuestionnaire}
-          prescription={prescription}
-          operationCode={currentOperationCode}
-          onClose={handleCloseQuestionnaire}
-          onRequestSubmitted={onRequestSubmitted}
-        />
-      )}
-
       {showQuestionnaireResponse && currentQuestionnaireResponse && (
         <QuestionnaireResponseViewer
           questionnaireResponse={currentQuestionnaireResponse}

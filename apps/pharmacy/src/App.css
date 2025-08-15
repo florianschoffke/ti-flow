@@ -1432,3 +1432,181 @@ body {
   font-size: 1.1em;
   text-transform: capitalize;
 }
+
+/* Results Modal Styles */
+.view-results-button {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-left: 8px;
+}
+
+.view-results-button:hover {
+  background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(72, 187, 120, 0.3);
+}
+
+.prescription-data {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.prescription-data h4 {
+  margin: 0 0 12px 0;
+  color: #495057;
+}
+
+.data-field {
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.data-field label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9em;
+}
+
+.data-field code {
+  background: #e9ecef;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+
+.download-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #dee2e6;
+}
+
+.download-button {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 600;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.download-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+}
+
+.download-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.success-message {
+  background: #f0fff4;
+  color: #38a169;
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 12px;
+  text-align: center;
+  font-weight: 500;
+  border: 1px solid #9ae6b4;
+}
+
+.result-info {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.result-info h3 {
+  margin: 0 0 12px 0;
+  color: #2d3748;
+  font-size: 1.2em;
+}
+
+.result-info p {
+  margin: 8px 0;
+  color: #4a5568;
+}
+
+/* Radio Button Styles for Choice Fields */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.radio-option:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.radio-option input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.radio-option input[type="radio"]:checked + .radio-label {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.radio-option:has(input[type="radio"]:checked) {
+  background: #edf2f7;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 1px #4299e1;
+}
+
+.radio-label {
+  margin: 0;
+  cursor: pointer;
+  color: #4a5568;
+  font-size: 0.95em;
+  transition: all 0.2s;
+}
+
+.radio-option input[type="radio"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.radio-option:has(input[type="radio"]:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f7fafc;
+}
+
+.radio-option:has(input[type="radio"]:disabled) .radio-label {
+  cursor: not-allowed;
+}

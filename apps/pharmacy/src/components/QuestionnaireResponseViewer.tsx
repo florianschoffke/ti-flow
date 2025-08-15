@@ -11,18 +11,67 @@ interface QuestionnaireResponseViewerProps {
 }
 
 export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, onSubmit }: QuestionnaireResponseViewerProps) {
+  // Helper functions defined first to avoid initialization order issues
+  const getFieldType = (linkId: string): string => {
+    // Determine field type based on linkId patterns
+    if (linkId.includes('date')) return 'date';
+    if (linkId.includes('urgency') || linkId.includes('priority')) return 'choice';
+    if (linkId.includes('description') || linkId.includes('request')) return 'text';
+    if (linkId === 'pzn' || linkId === 'packages') return 'number';
+    return 'string';
+  };
+
+  const getChoiceOptions = (linkId: string): {value: string, label: string}[] => {
+    // Define choice options based on field type
+    if (linkId.includes('urgency') || linkId.includes('priority')) {
+      return [
+        {value: 'routine', label: 'Routine'},
+        {value: 'urgent', label: 'Dringend'},
+        {value: 'emergency', label: 'Notfall'}
+      ];
+    }
+    return [];
+  };
+
+  const getDefaultChoiceValue = (linkId: string): string => {
+    // Get default value for choice fields
+    const options = getChoiceOptions(linkId);
+    return options.length > 0 ? options[0].value : '';
+  };
+
+  const getChoiceDisplayLabel = (linkId: string, value: string): string => {
+    // Get human-readable label for choice value
+    const options = getChoiceOptions(linkId);
+    const option = options.find(opt => opt.value === value);
+    return option ? option.label : value;
+  };
+
   const [editingFields, setEditingFields] = useState<{[linkId: string]: boolean}>({});
   const [fieldValues, setFieldValues] = useState<{[linkId: string]: string}>(() => {
     // Initialize field values from the questionnaire response
     const values: {[linkId: string]: string} = {};
-    questionnaireResponse.item?.forEach(item => {
+    
+    const processItem = (item: any) => {
       if (item.answer && item.answer.length > 0) {
         const answer = item.answer[0];
         values[item.linkId] = answer.valueString || answer.valueDate || answer.valueInteger?.toString() || '';
       } else {
-        values[item.linkId] = '';
+        // For choice fields, set default to first option
+        const fieldType = getFieldType(item.linkId);
+        if (fieldType === 'choice') {
+          values[item.linkId] = getDefaultChoiceValue(item.linkId);
+        } else {
+          values[item.linkId] = '';
+        }
       }
-    });
+      
+      // Handle nested items (groups)
+      if (item.item && item.item.length > 0) {
+        item.item.forEach(processItem);
+      }
+    };
+    
+    questionnaireResponse.item?.forEach(processItem);
     
     // Auto-fill pharmacy information for specific fields
     if (values['requester_name'] === '' || !values['requester_name']) {
@@ -96,21 +145,33 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
     
     setIsSubmitting(true);
     try {
-      // Create updated questionnaire response
-      const updatedResponse: QuestionnaireResponse = {
-        ...questionnaireResponse,
-        status: 'completed',
-        item: questionnaireResponse.item?.map(item => ({
-          ...item,
-          answer: fieldValues[item.linkId] ? [
+      // Function to process items recursively
+      const processItem = (item: any): any => {
+        const result = { ...item };
+        
+        // If this item has nested items (group), process them recursively
+        if (item.item && item.item.length > 0) {
+          result.item = item.item.map(processItem);
+        } else {
+          // For leaf items, update answer from fieldValues
+          result.answer = fieldValues[item.linkId] ? [
             // Determine value type based on linkId patterns
             item.linkId.includes('date') 
               ? { valueDate: fieldValues[item.linkId] } // Store dates as valueDate
               : /^\d+$/.test(fieldValues[item.linkId])
               ? { valueInteger: parseInt(fieldValues[item.linkId]) || 0 }
               : { valueString: fieldValues[item.linkId] }
-          ] : item.answer
-        }))
+          ] : item.answer;
+        }
+        
+        return result;
+      };
+      
+      // Create updated questionnaire response
+      const updatedResponse: QuestionnaireResponse = {
+        ...questionnaireResponse,
+        status: 'completed',
+        item: questionnaireResponse.item?.map(processItem)
       };
 
       await onSubmit(updatedResponse);
@@ -120,14 +181,6 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const getFieldType = (linkId: string): string => {
-    // Determine field type based on linkId patterns
-    if (linkId.includes('date')) return 'date';
-    if (linkId.includes('urgency')) return 'choice';
-    if (linkId.includes('description') || linkId.includes('request')) return 'text';
-    return 'string';
   };
 
   const getQuestionText = (linkId: string): string => {
@@ -141,7 +194,11 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
       'prescriber_lanr': 'LANR des Arztes',
       'organization_name': 'Name der Einrichtung',
       'prescription_date': 'Verordnungsdatum',
-      'change_request': 'Änderungswunsch',
+      'change_request': 'Gewünschte Medikationsänderung',
+      'medication': 'Gewünschter Medikamentenname',
+      'pzn': 'PZN (Pharmazentralnummer)',
+      'dosage': 'Gewünschte Dosierung',
+      'packages': 'Anzahl Packungen',
       'urgency': 'Dringlichkeit',
       'requester_name': 'Name des Anfragenden',
       'requester_tid': 'Telematik ID'
@@ -184,7 +241,8 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
         'patient_name', 'patient_kvnr', 
         'prescriber_name', 'prescriber_lanr', 'organization_name',
         'requester_name', 'requester_tid',
-        'receiver_name', 'receiver_tid', 'receiver_email', 'receiver_lanr', 'receiver_phone', 'receiver_address'].includes(item.linkId)
+        'receiver_name', 'receiver_tid', 'receiver_email', 'receiver_lanr', 'receiver_phone', 'receiver_address'].includes(item.linkId) &&
+      !(item.item && item.item.length > 0) // Exclude group items (they are handled separately)
     );
 
     return {
@@ -254,11 +312,21 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
                   value={currentValue}
                   onChange={(e) => handleFieldChange(item.linkId, e.target.value)}
                 >
-                  <option value="">Bitte wählen...</option>
-                  <option value="routine">Routine</option>
-                  <option value="urgent">Dringend</option>
-                  <option value="emergency">Notfall</option>
+                  {!currentValue && <option value="">Bitte wählen...</option>}
+                  {getChoiceOptions(item.linkId).map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
+              ) : fieldType === 'number' ? (
+                <input
+                  type="number"
+                  className="question-input"
+                  value={currentValue}
+                  onChange={(e) => handleFieldChange(item.linkId, e.target.value)}
+                  placeholder={`Bitte ${questionText.toLowerCase()} eingeben...`}
+                />
               ) : (
                 <input
                   type={fieldType === 'date' ? 'date' : 'text'}
@@ -277,7 +345,10 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
             </>
           ) : (
             <div className={`question-display-value ${isPharmacyFilled ? 'pharmacy-readonly' : ''}`}>
-              {currentValue || 'Keine Antwort'}
+              {fieldType === 'choice' && currentValue 
+                ? getChoiceDisplayLabel(item.linkId, currentValue)
+                : currentValue || 'Keine Antwort'
+              }
               {isPharmacyFilled && (
                 <span className="readonly-indicator">
                   🔒 Schreibgeschützt

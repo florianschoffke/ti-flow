@@ -485,3 +485,39 @@
   align-items: flex-start;
   gap: 12px;
 }
+
+/* Group styles */
+.questionnaire-response-group {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.questionnaire-response-group .group-title {
+  margin: 0 0 16px 0;
+  color: #495057;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.questionnaire-response-group .group-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.questionnaire-response-group .questionnaire-response-item {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 0;
+}
+
+.questionnaire-response-group .questionnaire-response-item:last-child {
+  margin-bottom: 0;
+}
