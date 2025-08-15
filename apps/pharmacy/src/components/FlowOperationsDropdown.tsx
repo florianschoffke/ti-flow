@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { CodeSystemConcept, Prescription, Questionnaire, QuestionnaireResponse, FhirBundle } from '../types';
 import { QuestionnaireRenderer } from './QuestionnaireRenderer';
 import { QuestionnaireResponseViewer } from './QuestionnaireResponseViewer';
-import { tiFlowService } from '../services/tiFlowService';
+import TiFlowService from '../services/tiFlowService';
 
 interface FlowOperationsDropdownProps {
   prescription: Prescription;
@@ -50,7 +50,7 @@ export function FlowOperationsDropdown({ prescription, availableOperations, fhir
         try {
           // Try to populate questionnaire using the smart endpoint
           console.log(`📋 Attempting to populate questionnaire with ID: ${operation.code}`);
-          const populatedResponse = await tiFlowService.populateQuestionnaire(operation.code, fhirBundle);
+          const populatedResponse = await TiFlowService.populateQuestionnaire(operation.code, fhirBundle);
           
           if (populatedResponse) {
             console.log('✅ Successfully populated questionnaire:', populatedResponse);
@@ -169,11 +169,17 @@ export function FlowOperationsDropdown({ prescription, availableOperations, fhir
           questionnaireResponse={currentQuestionnaireResponse}
           onClose={handleCloseQuestionnaireResponse}
           onSubmit={async (updatedResponse) => {
-            console.log('📤 Submitting updated questionnaire response:', updatedResponse);
-            // Here you could send the response to the backend
-            // For now, just log it and close
-            if (onRequestSubmitted) {
-              onRequestSubmitted();
+            try {
+              console.log('📤 Submitting updated questionnaire response:', updatedResponse);
+              const result = await TiFlowService.submitFlowRequest(updatedResponse);
+              console.log('✅ Flow request submitted successfully:', result);
+              
+              if (onRequestSubmitted) {
+                onRequestSubmitted();
+              }
+            } catch (error) {
+              console.error('❌ Failed to submit flow request:', error);
+              throw error; // Re-throw to let QuestionnaireResponseViewer handle the error UI
             }
           }}
         />

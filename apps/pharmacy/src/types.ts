@@ -14,6 +14,7 @@ export interface Prescription {
   dosage: string;
   quantity: number;
   doctor: string;
+  doctorLanr?: string; // Added LANR field
   issueDate: string;
   status: 'pending' | 'dispensed' | 'cancelled';
   compositionType: string;

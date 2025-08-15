@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -137,12 +137,52 @@ class FlowService {
       updated: now,
       status: TASK_STATUS.REQUESTED,
       owner: requester, // Initially owned by requester
-      questionnaireResponseId
+      questionnaireResponseId,
+      type: 'flow-request'
     };
 
     db.tasks[taskId] = task;
     this.saveDatabase(db);
 
+    return { taskId, questionnaireResponseId, task };
+  }
+
+  /**
+   * Create a new document request with enhanced validation
+   */
+  createDocumentRequest(requester_tid, receiver_tid, questionnaireResponse) {
+    const db = this.loadDatabase();
+    
+    // Generate IDs
+    const taskId = this.generateTaskId(db);
+    const questionnaireResponseId = this.generateQuestionnaireId(db);
+    const now = new Date().toISOString();
+
+    // Store questionnaire response
+    db.questionnaires[questionnaireResponseId] = {
+      id: questionnaireResponseId,
+      ...questionnaireResponse,
+      created: now
+    };
+
+    // Create task for document request with proper telematik-id format
+    const task = {
+      id: taskId,
+      requester: `Organization/${requester_tid}`,
+      receiver: `Organization/${receiver_tid}`,
+      created: now,
+      updated: now,
+      status: TASK_STATUS.REQUESTED,
+      owner: `Organization/${receiver_tid}`, // Owner is the receiver (where request goes to)
+      questionnaireResponseId,
+      type: 'document-request'
+    };
+
+    db.tasks[taskId] = task;
+    this.saveDatabase(db);
+
+    console.log(`📄 Document request created: Task ${taskId} from ${requester_tid} to ${receiver_tid}`);
+    
     return { taskId, questionnaireResponseId, task };
   }
 
@@ -156,6 +196,7 @@ class FlowService {
 
   /**
    * Get all tasks for a user (where user is either requester or receiver)
+   * For telematik-id format, checks against Organization/telematik-id
    */
   getTasksForUser(user) {
     const db = this.loadDatabase();
@@ -163,13 +204,97 @@ class FlowService {
     
     for (const taskId in db.tasks) {
       const task = db.tasks[taskId];
-      if (task.requester === user || task.receiver === user) {
+      // Support both direct telematik-id and Organization/telematik-id format
+      const requesterMatch = task.requester === user || task.requester === `Organization/${user}`;
+      const receiverMatch = task.receiver === user || task.receiver === `Organization/${user}`;
+      
+      if (requesterMatch || receiverMatch) {
         userTasks.push(task);
       }
     }
     
     // Sort by creation date (newest first)
     return userTasks.sort((a, b) => new Date(b.created) - new Date(a.created));
+  }
+
+  /**
+   * Find questionnaire form by URL
+   */
+  findQuestionnaireByUrl(url) {
+    try {
+      const formsPath = join(this.dataPath, 'forms');
+      const categories = readdirSync(formsPath);
+      
+      for (const category of categories) {
+        const categoryPath = join(formsPath, category);
+        if (statSync(categoryPath).isDirectory()) {
+          const files = readdirSync(categoryPath);
+          
+          for (const file of files) {
+            if (file.endsWith('.json')) {
+              const filePath = join(categoryPath, file);
+              try {
+                const content = readFileSync(filePath, 'utf8');
+                const questionnaire = JSON.parse(content);
+                
+                if (questionnaire.url === url) {
+                  return questionnaire;
+                }
+              } catch (error) {
+                console.warn(`Error reading form file ${filePath}:`, error.message);
+              }
+            }
+          }
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error searching for questionnaire by URL:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Extract requester and receiver telematik-IDs from QuestionnaireResponse
+   */
+  extractRequesterAndReceiver(questionnaireResponse) {
+    if (!questionnaireResponse.item) {
+      return { requester_tid: null, receiver_tid: null };
+    }
+
+    let requester_tid = null;
+    let receiver_tid = null;
+
+    // Search through the items to find requester_tid and receiver_tid
+    const findValueByLinkId = (items, linkId) => {
+      for (const item of items) {
+        if (item.linkId === linkId && item.answer && item.answer.length > 0) {
+          // Look for valueString, valueInteger, or other value types in the first answer
+          const answer = item.answer[0];
+          if (answer.valueString) {
+            return answer.valueString;
+          } else if (answer.valueInteger !== undefined) {
+            return answer.valueInteger.toString();
+          } else if (answer.valueDecimal !== undefined) {
+            return answer.valueDecimal.toString();
+          } else if (answer.valueBoolean !== undefined) {
+            return answer.valueBoolean.toString();
+          }
+        }
+        // Recursively search nested items
+        if (item.item && item.item.length > 0) {
+          const nestedResult = findValueByLinkId(item.item, linkId);
+          if (nestedResult) return nestedResult;
+        }
+      }
+      return null;
+    };
+
+    requester_tid = findValueByLinkId(questionnaireResponse.item, 'requester_tid');
+    receiver_tid = findValueByLinkId(questionnaireResponse.item, 'receiver_tid');
+
+    return { requester_tid, receiver_tid };
   }
 
   /**
@@ -298,6 +423,13 @@ class FlowService {
   toFhirTask(task) {
     if (!task) return null;
 
+    // Helper function to ensure proper Organization reference format
+    const ensureOrgReference = (value) => {
+      if (!value) return value;
+      if (value.startsWith('Organization/')) return value;
+      return `Organization/${value}`;
+    };
+
     return {
       resourceType: "Task",
       id: task.id,
@@ -311,13 +443,13 @@ class FlowService {
       authoredOn: task.created,
       lastModified: task.updated,
       requester: {
-        reference: `Organization/${task.requester}`
+        reference: ensureOrgReference(task.requester)
       },
       owner: {
-        reference: `Organization/${task.owner}`
+        reference: ensureOrgReference(task.owner)
       },
       for: {
-        reference: `Organization/${task.receiver}`
+        reference: ensureOrgReference(task.receiver)
       },
       input: [
         {
@@ -475,29 +607,139 @@ export function setupFlowService(app, registerEndpoint) {
     }
   });
 
-  // POST /$request - Create new flow request
-  app.post('/\\$request', (req, res) => {
+  // POST /Task/$start-flow-request - Create new flow request
+  app.post('/Task/\\$start-flow-request', (req, res) => {
     try {
-      const { requester, receiver, questionnaireResponse } = req.body;
+      const { questionnaireResponse } = req.body;
       
-      if (!requester || !receiver || !questionnaireResponse) {
+      // Validate required fields
+      if (!questionnaireResponse) {
         return res.status(400).json({
-          error: 'Missing required fields',
-          message: 'requester, receiver, and questionnaireResponse are required'
+          error: 'Missing required field',
+          message: 'questionnaireResponse is required'
         });
       }
 
-      const result = flowService.createRequest(requester, receiver, questionnaireResponse);
+      // Validate QuestionnaireResponse FHIR format
+      if (!questionnaireResponse.resourceType || questionnaireResponse.resourceType !== 'QuestionnaireResponse') {
+        return res.status(400).json({
+          error: 'Invalid FHIR resource',
+          message: 'questionnaireResponse must be a FHIR QuestionnaireResponse resource with resourceType: "QuestionnaireResponse"'
+        });
+      }
+
+      // Extract requester and receiver from questionnaire response
+      const { requester_tid, receiver_tid } = flowService.extractRequesterAndReceiver(questionnaireResponse);
+      
+      if (!requester_tid || !receiver_tid) {
+        return res.status(400).json({
+          error: 'Missing participant information',
+          message: 'QuestionnaireResponse must contain requester_tid and receiver_tid fields'
+        });
+      }
+
+      // Mock implementation - just return 201 as requested
+      const mockTaskId = `flow-task-${Date.now()}`;
+      const mockQuestionnaireResponseId = `flow-qr-${Date.now()}`;
       
       res.status(201).json({
         message: 'Flow request created successfully',
+        taskId: mockTaskId,
+        questionnaireResponseId: mockQuestionnaireResponseId,
+        requester_tid,
+        receiver_tid,
+        task: {
+          resourceType: 'Task',
+          id: mockTaskId,
+          status: 'requested',
+          intent: 'order',
+          description: 'Flow request task'
+        }
+      });
+    } catch (error) {
+      console.error('Error creating flow request:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // POST /Task/$start-document-request - Create new document request
+  app.post('/Task/\\$start-document-request', (req, res) => {
+    try {
+      // Accept QuestionnaireResponse directly in request body
+      const questionnaireResponse = req.body;
+      
+      // Validate required fields
+      if (!questionnaireResponse || typeof questionnaireResponse !== 'object') {
+        return res.status(400).json({
+          error: 'Missing required resource',
+          message: 'Request body must contain a QuestionnaireResponse resource'
+        });
+      }
+
+      // Validate QuestionnaireResponse FHIR format
+      if (!questionnaireResponse.resourceType || questionnaireResponse.resourceType !== 'QuestionnaireResponse') {
+        return res.status(400).json({
+          error: 'Invalid FHIR resource',
+          message: 'Request body must be a FHIR QuestionnaireResponse resource with resourceType: "QuestionnaireResponse"'
+        });
+      }
+
+      // Validate questionnaire field exists
+      if (!questionnaireResponse.questionnaire) {
+        return res.status(400).json({
+          error: 'Missing questionnaire reference',
+          message: 'QuestionnaireResponse must contain a "questionnaire" field with the questionnaire URL'
+        });
+      }
+
+      // Find questionnaire form by URL
+      const questionnaireUrl = questionnaireResponse.questionnaire;
+      const questionnaire = flowService.findQuestionnaireByUrl(questionnaireUrl);
+      
+      if (!questionnaire) {
+        return res.status(404).json({
+          error: 'Questionnaire not found',
+          message: `No questionnaire found with URL: ${questionnaireUrl}`
+        });
+      }
+
+      console.log(`✅ Validated questionnaire: ${questionnaire.title} (${questionnaire.id})`);
+
+      // Debug: Log the QuestionnaireResponse structure
+      console.log('🔍 QuestionnaireResponse structure:', JSON.stringify(questionnaireResponse, null, 2));
+      console.log('🔍 QuestionnaireResponse items:', questionnaireResponse.item?.map(item => ({ linkId: item.linkId, hasAnswer: !!item.answer })));
+
+      // Extract requester and receiver from questionnaire response
+      const { requester_tid, receiver_tid } = flowService.extractRequesterAndReceiver(questionnaireResponse);
+      
+      console.log('🔍 Extracted values:', { requester_tid, receiver_tid });
+      
+      if (!requester_tid || !receiver_tid) {
+        return res.status(400).json({
+          error: 'Missing participant information',
+          message: 'QuestionnaireResponse must contain requester_tid and receiver_tid fields with values'
+        });
+      }
+
+      console.log(`📋 Document request from ${requester_tid} to ${receiver_tid}`);
+
+      // Create document request with telematik-ids extracted from form
+      const result = flowService.createDocumentRequest(requester_tid, receiver_tid, questionnaireResponse);
+      
+      res.status(201).json({
+        message: 'Document request created successfully',
         taskId: result.taskId,
         questionnaireResponseId: result.questionnaireResponseId,
+        requester_tid,
+        receiver_tid,
         task: flowService.toFhirTask(result.task)
       });
     } catch (error) {
-      console.error('Error creating request:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error('Error creating document request:', error);
+      res.status(500).json({ 
+        error: 'Internal server error',
+        message: error.message 
+      });
     }
   });
 
@@ -651,17 +893,21 @@ export function setupFlowService(app, registerEndpoint) {
   registerEndpoint('Flow Service', 'GET', '/Task/:id', 'Get task status as FHIR Task resource');
   registerEndpoint('Flow Service', 'GET', '/Questionnaire/:id', 'Get questionnaire as FHIR Questionnaire resource');
   registerEndpoint('Flow Service', 'GET', '/QuestionnaireResponse/:id', 'Get questionnaire response as FHIR QuestionnaireResponse resource');
-  registerEndpoint('Flow Service', 'POST', '/Task/$request', 'Create new flow request with questionnaire response');
+  registerEndpoint('Flow Service', 'POST', '/Task/$start-flow-request', 'Create new flow request with questionnaire response');
+  registerEndpoint('Flow Service', 'POST', '/Task/$start-document-request', 'Create new document request with questionnaire response');
   registerEndpoint('Flow Service', 'POST', '/Task/:id/$counter-offer', 'Submit counter-offer with updated questionnaire');
   registerEndpoint('Flow Service', 'POST', '/Task/:id/$reject', 'Reject a flow request (no content)');
   registerEndpoint('Flow Service', 'POST', '/Task/:id/$accept', 'Accept a flow request (no content)');
   registerEndpoint('Flow Service', 'POST', '/Task/:id/$close', 'Close/complete a request with document data');
 
   console.log('✅ Flow Service module loaded');
-  console.log('� Flow service endpoints configured:');
+  console.log('📋 Flow service endpoints configured:');
+  console.log('   GET /Task?user=<user> - Get all tasks for user');
   console.log('   GET /Task/:id - Get task status');
   console.log('   GET /Questionnaire/:id - Get questionnaire');
-  console.log('   POST /Task/$request - Create new request');
+  console.log('   GET /QuestionnaireResponse/:id - Get questionnaire response');
+  console.log('   POST /Task/$start-flow-request - Create new flow request');
+  console.log('   POST /Task/$start-document-request - Create new document request');
   console.log('   POST /Task/:id/$counter-offer - Submit counter-offer');
   console.log('   POST /Task/:id/$reject - Reject request');
   console.log('   POST /Task/:id/$accept - Accept request');

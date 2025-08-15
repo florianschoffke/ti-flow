@@ -1,0 +1,71 @@
+[
+  {
+    "id": "1",
+    "lanr": "123456628",
+    "telematikId": "3-abc-12345678",
+    "name": "Dr. med. Paul Freiherr von Müller",
+    "firstName": "Paul",
+    "lastName": "Müller",
+    "title": "Dr. med.",
+    "prefix": "Freiherr von",
+    "specialty": "Allgemeinmedizin",
+    "address": {
+      "street": "Hauptstraße 1",
+      "city": "München",
+      "postalCode": "80331"
+    },
+    "phone": "+49 89 12345678",
+    "email": "paul.mueller@praxis.de"
+  },
+  {
+    "id": "2", 
+    "lanr": "999999900",
+    "telematikId": "3-def-87654321",
+    "name": "Dr. med. Emma Schneider",
+    "firstName": "Emma",
+    "lastName": "Schneider", 
+    "title": "Dr. med.",
+    "specialty": "Innere Medizin",
+    "address": {
+      "street": "Berliner Allee 15",
+      "city": "Hamburg",
+      "postalCode": "20095"
+    },
+    "phone": "+49 40 87654321",
+    "email": "emma.schneider@klinik.de"
+  },
+  {
+    "id": "3",
+    "lanr": "987654423", 
+    "telematikId": "3-ghi-45678912",
+    "name": "Dr. med. Emma Schneider",
+    "firstName": "Emma",
+    "lastName": "Schneider",
+    "title": "Dr. med.",
+    "specialty": "Dermatologie", 
+    "address": {
+      "street": "Kastanienallee 8",
+      "city": "Berlin",
+      "postalCode": "10435"
+    },
+    "phone": "+49 30 45678912",
+    "email": "e.schneider@hautarzt.de"
+  },
+  {
+    "id": "4",
+    "lanr": "838382202",
+    "telematikId": "3-jkl-78912345",
+    "name": "Dr. med. Hans Topp-Glücklich",
+    "firstName": "Hans",
+    "lastName": "Topp-Glücklich",
+    "title": "Dr. med.",
+    "specialty": "Orthopädie",
+    "address": {
+      "street": "Friedrichstraße 42",
+      "city": "Dresden", 
+      "postalCode": "01067"
+    },
+    "phone": "+49 351 78912345",
+    "email": "hans.topp-gluecklich@ortho.de"
+  }
+]

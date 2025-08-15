@@ -389,7 +389,7 @@ class InformationService {
   evaluateSimpleFHIRPath(expression, bundle) {
     try {
       console.log(`📊 Evaluating FHIRPath: ${expression}`);
-      console.log(`📦 Bundle context:`, JSON.stringify(bundle, null, 2));
+      //console.log(`📦 Bundle context:`, JSON.stringify(bundle, null, 2));
       
       // Handle %resource replacement properly - %resource refers to the bundle in our case
       // Remove %resource. prefix since we're evaluating against the bundle directly

@@ -1,4 +1,5 @@
 import type { Patient, Prescription, FhirBundle } from '../types';
+import { FhirPrescriptionParser } from './fhirPrescriptionParser';
 
 interface ParsedPrescriptionData {
   patient: Patient;
@@ -35,9 +36,13 @@ export class MinimalFhirParser {
                              this.extractValue(xmlText, /<text[^>]*>([^<]*(?:mg|Tabletten)[^<]*)<\/text>/i) ||
                              'Extracted Medication';
       
-      // Extract doctor name - look for Practitioner section
+      // Extract doctor name and LANR - look for Practitioner section
       const doctorMatch = xmlText.match(/<Practitioner.*?<name.*?<prefix[^>]*value="([^"]*)".*?<given[^>]*value="([^"]*)".*?<family[^>]*value="([^"]*)"/s);
       const doctorName = doctorMatch ? `${doctorMatch[1]} ${doctorMatch[2]} ${doctorMatch[3]}`.trim() : 'Dr. Extracted';
+      
+      // Extract LANR using FhirPrescriptionParser
+      const doctorLanr = FhirPrescriptionParser.extractLanrFromXml(xmlText);
+      console.log(`🔍 Extracted LANR from ${filePath}:`, doctorLanr);
       
       // Extract birth date
       const birthDate = this.extractValue(xmlText, /<birthDate value="([^"]+)"/) || '1980-01-01';
@@ -60,6 +65,7 @@ export class MinimalFhirParser {
         dosage: 'Nach ärztlicher Anweisung',
         quantity: 1,
         doctor: doctorName,
+        doctorLanr: doctorLanr || undefined,
         issueDate: new Date().toLocaleDateString('de-DE'),
         status: 'pending',
         compositionType: 'e16A'

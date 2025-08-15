@@ -103,6 +103,7 @@ export class FhirPrescriptionParser {
       dosage: this.getDosageString(medication, medicationRequest),
       quantity: this.getQuantity(medicationRequest),
       doctor: this.getPractitionerName(practitioner),
+      doctorLanr: this.getPractitionerLanr(practitioner),
       issueDate: this.formatDate(medicationRequest?.authoredOn || timestamp),
       status: 'pending',
       compositionType: this.getCompositionType(composition)
@@ -268,6 +269,51 @@ export class FhirPrescriptionParser {
     if (name.family) parts.push(name.family);
 
     return parts.length > 0 ? parts.join(' ') : 'Unbekannter Arzt';
+  }
+
+  private static getPractitionerLanr(practitioner: any): string | undefined {
+    if (!practitioner?.identifier) return undefined;
+    
+    const identifiers = Array.isArray(practitioner.identifier) ? 
+      practitioner.identifier : [practitioner.identifier];
+    
+    // Find identifier with LANR type
+    const lanrIdentifier = identifiers.find((id: any) => {
+      const type = id.type;
+      if (!type?.coding) return false;
+      
+      const coding = Array.isArray(type.coding) ? type.coding[0] : type.coding;
+      return coding?.code === 'LANR';
+    });
+    
+    return lanrIdentifier?.value;
+  }
+
+  // Public method to extract LANR from XML content
+  public static extractLanrFromXml(xmlContent: string): string | null {
+    try {
+      // Pattern to match LANR identifier structure
+      const lanrPattern = /<identifier>[\s\S]*?<type>[\s\S]*?<coding>[\s\S]*?<code value="LANR"[\s\S]*?<\/coding>[\s\S]*?<\/type>[\s\S]*?<value value="([^"]+)"/;
+      const lanrMatch = xmlContent.match(lanrPattern);
+      if (lanrMatch) {
+        console.log('✅ LANR extracted:', lanrMatch[1]);
+        return lanrMatch[1];
+      }
+      
+      // Alternative more flexible pattern
+      const altPattern = /<code value="LANR"[\s\S]*?<value value="([^"]+)"/;
+      const altMatch = xmlContent.match(altPattern);
+      if (altMatch) {
+        console.log('✅ LANR extracted (alt):', altMatch[1]);
+        return altMatch[1];
+      }
+      
+      console.warn('⚠️ No LANR found in XML content');
+      return null;
+    } catch (error) {
+      console.warn('Error extracting LANR from XML:', error);
+      return null;
+    }
   }
 
   private static getCompositionType(composition: any): string {

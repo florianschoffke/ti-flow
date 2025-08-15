@@ -17,7 +17,7 @@ export function TaskList() {
   const loadTasks = async () => {
     try {
       setIsLoading(true);
-      const userTasks = await TiFlowService.getTasksForUser('pharmacy-app');
+      const userTasks = await TiFlowService.getTasksForUser('1-AVS-12345678901');
       setTasks(userTasks);
       setError(null);
     } catch (err) {
@@ -158,6 +158,8 @@ export function TaskList() {
             <div className="modal-body">
               <QuestionnaireResponseViewer 
                 questionnaireResponse={selectedQuestionnaireResponse}
+                onClose={closeModal}
+                standalone={false}
               />
             </div>
           </div>

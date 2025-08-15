@@ -269,12 +269,12 @@ paths:
         '400':
           description: Missing user parameter
 
-  /Task/$request:
+  /Task/$start-flow-request:
     post:
       tags:
         - Flow Service
       summary: Create new flow request
-      description: Creates a new flow request with questionnaire response
+      description: Creates a new flow request with questionnaire response. The requester and receiver telematik-IDs are extracted from the questionnaire response items.
       requestBody:
         required: true
         content:
@@ -282,19 +282,21 @@ paths:
             schema:
               type: object
               required:
-                - requester
-                - receiver
                 - questionnaireResponse
               properties:
-                requester:
-                  type: string
-                  description: User creating the request
-                receiver:
-                  type: string
-                  description: User receiving the request
                 questionnaireResponse:
                   type: object
-                  description: FHIR QuestionnaireResponse data
+                  description: FHIR QuestionnaireResponse containing requester_tid and receiver_tid items
+                  properties:
+                    resourceType:
+                      type: string
+                      example: QuestionnaireResponse
+                    status:
+                      type: string
+                      example: completed
+                    item:
+                      type: array
+                      description: Must contain items with linkId 'requester_tid' and 'receiver_tid'
       responses:
         '201':
           description: Request created successfully
@@ -309,10 +311,58 @@ paths:
                     type: string
                   questionnaireResponseId:
                     type: string
+                  requester_tid:
+                    type: string
+                  receiver_tid:
+                    type: string
                   task:
                     type: object
         '400':
-          description: Invalid request data
+          description: Invalid request data or missing participant information
+
+  /Task/$start-document-request:
+    post:
+      tags:
+        - Flow Service
+      summary: Create new document request
+      description: Creates a new document request with questionnaire response. The requester and receiver telematik-IDs are extracted from the questionnaire response items. The questionnaire URL is validated against available forms.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - questionnaireResponse
+              properties:
+                questionnaireResponse:
+                  type: object
+                  description: FHIR QuestionnaireResponse containing questionnaire URL and participant information
+                  properties:
+                    resourceType:
+                      type: string
+                      example: QuestionnaireResponse
+                    questionnaire:
+                      type: string
+                      example: http://gematik.de/fhir/ti-flow/Questionnaire/e16A-korrektur
+                    status:
+                      type: string
+                      example: completed
+                    item:
+                      type: array
+                      description: Must contain items with linkId 'requester_tid' and 'receiver_tid'
+      responses:
+        '201':
+          description: Request created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: FHIR Task
+        '400':
+          description: Invalid request data or missing participant information
+        '404':
+          description: Questionnaire not found
 
   /Task/{id}:
     get:

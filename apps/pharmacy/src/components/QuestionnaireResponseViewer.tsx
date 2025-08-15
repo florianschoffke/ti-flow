@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { QuestionnaireResponse } from '../types';
 import { PharmacyInfoService } from '../services/pharmacyInfoService';
+import { ContactsService } from '../services/contactsService';
 import './QuestionnaireResponseViewer.css';
 
 interface QuestionnaireResponseViewerProps {
@@ -34,6 +35,41 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
     return values;
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Contact suggestion functionality
+  const contactsService = new ContactsService();
+  
+  // Extract prescriber LANR from questionnaire response
+  const getPrescriberLanr = (): string | null => {
+    const prescriberLanrItem = questionnaireResponse.item?.find(item => item.linkId === 'prescriber_lanr');
+    return prescriberLanrItem?.answer?.[0]?.valueString || null;
+  };
+
+  // Get contact suggestion based on prescriber LANR
+  const prescriberLanr = getPrescriberLanr();
+  const contactSuggestion = prescriberLanr ? contactsService.findByLanr(prescriberLanr) : null;
+  const hasContactSuggestion = contactSuggestion !== null;
+
+  // Function to fill receiver fields from contact suggestion
+  const fillFromContacts = () => {
+    if (!contactSuggestion) return;
+    
+    const contact = contactSuggestion;
+    const newValues = { ...fieldValues };
+    
+    // Fill receiver fields with contact information
+    if (contact.name) newValues['receiver_name'] = contact.name;
+    if (contact.email) newValues['receiver_email'] = contact.email;
+    if (contact.telematikId) newValues['receiver_tid'] = contact.telematikId;
+    if (contact.lanr) newValues['receiver_lanr'] = contact.lanr;
+    if (contact.phone) newValues['receiver_phone'] = contact.phone;
+    if (contact.address) {
+      const addressString = `${contact.address.street}, ${contact.address.postalCode} ${contact.address.city}`;
+      newValues['receiver_address'] = addressString;
+    }
+    
+    setFieldValues(newValues);
+  };
 
   const handleClose = () => {
     if (onClose) {
@@ -139,11 +175,16 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
       ['requester_name', 'requester_tid'].includes(item.linkId)
     );
     
+    const receiverFields = items.filter(item => 
+      ['receiver_name', 'receiver_tid', 'receiver_email', 'receiver_lanr', 'receiver_phone', 'receiver_address'].includes(item.linkId)
+    );
+    
     const otherFields = items.filter(item => 
       !['prescription_id', 'medication_name', 'prescription_date', 
         'patient_name', 'patient_kvnr', 
         'prescriber_name', 'prescriber_lanr', 'organization_name',
-        'requester_name', 'requester_tid'].includes(item.linkId)
+        'requester_name', 'requester_tid',
+        'receiver_name', 'receiver_tid', 'receiver_email', 'receiver_lanr', 'receiver_phone', 'receiver_address'].includes(item.linkId)
     );
 
     return {
@@ -151,6 +192,7 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
       patient: patientFields,
       prescriber: prescriberFields,
       pharmacy: pharmacyFields,
+      receiver: receiverFields,
       other: otherFields
     };
   };
@@ -320,6 +362,29 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
                 </h3>
                 <div className="group-content">
                   {fieldGroups.pharmacy.map(renderResponseItem)}
+                </div>
+              </div>
+            )}
+
+            {/* Receiver Information Group */}
+            {fieldGroups.receiver.length > 0 && (
+              <div className="questionnaire-response-group">
+                <h3 className="group-title">
+                  <span className="group-icon">📩</span>
+                  Empfängerdaten
+                  {hasContactSuggestion && (
+                    <button
+                      type="button"
+                      className="btn btn-contact-suggestion btn-small"
+                      onClick={fillFromContacts}
+                      title={`Empfängerdaten von ${contactSuggestion?.name} übernehmen`}
+                    >
+                      📞 Aus Kontakten ausfüllen
+                    </button>
+                  )}
+                </h3>
+                <div className="group-content">
+                  {fieldGroups.receiver.map(renderResponseItem)}
                 </div>
               </div>
             )}

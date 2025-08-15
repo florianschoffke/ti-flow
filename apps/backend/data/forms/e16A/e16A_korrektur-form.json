@@ -269,6 +269,30 @@
       ],
       "text": "Telematik ID des Anfragenden",
       "required": false
+    },
+    {
+      "type": "string",
+      "linkId": "receiver_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "receiver_name"
+        }
+      ],
+      "text": "Name des Empfängers",
+      "required": false
+    },
+    {
+      "type": "string",
+      "linkId": "receiver_tid",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "receiver_tid"
+        }
+      ],
+      "text": "Telematik ID des Empfängers",
+      "required": false
     }
   ]
 }

@@ -290,6 +290,35 @@
   background: #4caf50;
 }
 
+.btn-contact-suggestion {
+  background: #ff9800;
+  color: white;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  margin-left: 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.btn-contact-suggestion.btn-small {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  margin-left: 8px;
+}
+
+.btn-contact-suggestion:hover:not(:disabled) {
+  background: #f57c00;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .questionnaire-modal {

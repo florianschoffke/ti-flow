@@ -1,6 +1,160 @@
 {
-  "tasks": {},
-  "questionnaires": {},
-  "nextTaskId": 1,
-  "nextQuestionnaireId": 1
+  "tasks": {
+    "1": {
+      "id": "1",
+      "requester": "Organization/1-AVS-12345678901",
+      "receiver": "Organization/3-abc-12345678",
+      "created": "2025-08-15T07:05:19.646Z",
+      "updated": "2025-08-15T07:05:19.646Z",
+      "status": "requested",
+      "owner": "Organization/3-abc-12345678",
+      "questionnaireResponseId": "1",
+      "type": "document-request"
+    }
+  },
+  "questionnaires": {
+    "1": {
+      "id": "populated-1755241498412",
+      "resourceType": "QuestionnaireResponse",
+      "meta": {
+        "profile": [
+          "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaireresponse"
+        ]
+      },
+      "status": "completed",
+      "questionnaire": "http://gematik.de/fhir/ti-flow/Questionnaire/e16A-korrektur",
+      "authored": "2025-08-15T07:04:58.412Z",
+      "item": [
+        {
+          "linkId": "patient_name",
+          "text": "Name des Patienten",
+          "answer": [
+            {
+              "valueString": "Königsstein, Ludger"
+            }
+          ]
+        },
+        {
+          "linkId": "patient_kvnr",
+          "text": "Krankenversichertennummer des Patienten",
+          "answer": [
+            {
+              "valueString": "K220635158"
+            }
+          ]
+        },
+        {
+          "linkId": "prescription_id",
+          "text": "Betreffendes Rezept (Prescription ID)",
+          "answer": [
+            {
+              "valueString": "160.100.000.000.006.24"
+            }
+          ]
+        },
+        {
+          "linkId": "medication_name",
+          "text": "Verordnetes Medikament",
+          "answer": [
+            {
+              "valueString": "Januvia® 50 mg 28 Filmtabletten N1"
+            }
+          ]
+        },
+        {
+          "linkId": "prescriber_name",
+          "text": "Name des verordnenden Arztes",
+          "answer": [
+            {
+              "valueString": "Dr. med. Paul Freiherr von Müller"
+            }
+          ]
+        },
+        {
+          "linkId": "prescriber_lanr",
+          "text": "LANR des verordnenden Arztes",
+          "answer": [
+            {
+              "valueInteger": 123456628
+            }
+          ]
+        },
+        {
+          "linkId": "organization_name",
+          "text": "Name der verordnenden Einrichtung",
+          "answer": [
+            {
+              "valueString": "MVZ"
+            }
+          ]
+        },
+        {
+          "linkId": "prescription_date",
+          "text": "Verordnungsdatum",
+          "answer": [
+            {
+              "valueDate": "2024-05-20"
+            }
+          ]
+        },
+        {
+          "linkId": "change_request",
+          "text": "Detaillierte Beschreibung des Änderungswunsches",
+          "answer": [
+            {
+              "valueString": "Bitte 2 Packungen"
+            }
+          ]
+        },
+        {
+          "linkId": "urgency",
+          "text": "Dringlichkeit der Korrektur",
+          "answer": [
+            {
+              "valueString": "routine"
+            }
+          ]
+        },
+        {
+          "linkId": "requester_name",
+          "text": "Name des Anfragenden (falls abweichend)",
+          "answer": [
+            {
+              "valueString": "Apotheke am Stadtplatz (Dr. Martha Müller)"
+            }
+          ]
+        },
+        {
+          "linkId": "requester_tid",
+          "text": "Telematik ID des Anfragenden",
+          "answer": [
+            {
+              "valueString": "1-AVS-12345678901"
+            }
+          ]
+        },
+        {
+          "linkId": "receiver_name",
+          "text": "Name des Empfängers",
+          "answer": [
+            {
+              "valueString": "Dr. med. Paul Freiherr von Müller"
+            }
+          ]
+        },
+        {
+          "linkId": "receiver_tid",
+          "text": "Telematik ID des Empfängers",
+          "answer": [
+            {
+              "valueString": "3-abc-12345678"
+            }
+          ]
+        }
+      ],
+      "created": "2025-08-15T07:05:19.646Z"
+    }
+  },
+  "nextTaskId": 2,
+  "nextQuestionnaireId": 2
 }

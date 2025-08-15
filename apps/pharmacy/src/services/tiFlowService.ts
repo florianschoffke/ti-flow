@@ -179,7 +179,7 @@ export class TiFlowService {
   /*
    * Convert our custom FhirBundle to proper FHIR Bundle format
    * TODO: Implement proper XML to JSON conversion
-   * 
+   */
   private static async convertToProperFhirBundle(fhirBundle: any): Promise<any> {
     // If it's already a proper FHIR Bundle, return as is
     if (fhirBundle.resourceType === 'Bundle') {
@@ -324,13 +324,9 @@ export class TiFlowService {
 
   // Submit a flow request (creates a Task)
   static async submitFlowRequest(questionnaireResponse: QuestionnaireResponse): Promise<any> {
-    return this.fetchWithAuth(`${BASE_URL}/$request`, {
+    return this.fetchWithAuth(`${BASE_URL}/Task/$start-document-request`, {
       method: 'POST',
-      body: JSON.stringify({
-        requester: 'pharmacy-app',
-        receiver: 'doctor-app',
-        questionnaireResponse: questionnaireResponse
-      })
+      body: JSON.stringify(questionnaireResponse)
     });
   }
 
@@ -384,35 +380,78 @@ export class TiFlowService {
   // Get active requests (from pharmacy perspective)
   static async getActiveRequests(): Promise<{ requests: ActiveRequest[] }> {
     try {
-      // For now, let's get tasks by requesting them individually since there's no bulk endpoint
-      // In a real implementation, you might have a search/filter endpoint
+      // Get pharmacy telematik-ID from pharmacy info
+      const pharmacyInfoResponse = await fetch('/data/pharmacyInfo.json');
+      const pharmacyInfo = await pharmacyInfoResponse.json();
+      const pharmacyTelematikId = pharmacyInfo.pharmacyInfo.telematikId;
+      
+      console.log(`🔍 Fetching tasks for pharmacy: ${pharmacyTelematikId}`);
+      const response = await this.fetchWithAuth(`${BASE_URL}/Task?user=${pharmacyTelematikId}`);
+      
       const activeRequests: ActiveRequest[] = [];
       
-      // Try to get some recent tasks (this is a simplified approach)
-      for (let i = 1; i <= 10; i++) {
-        try {
-          const task = await this.getTask(i.toString());
-          if (task && task.requester?.reference === 'Organization/pharmacy-app') {
-            activeRequests.push({
-              id: task.id,
-              type: 'Request Operation', // We could map this from the questionnaire
-              kind: 'flow-request',
-              status: task.status,
-              requestDate: task.authoredOn || new Date().toISOString(),
-              lastUpdated: task.lastModified || task.authoredOn || new Date().toISOString()
-            });
+      if (response.entry && Array.isArray(response.entry)) {
+        for (const entry of response.entry) {
+          const task = entry.resource;
+          if (task && task.resourceType === 'Task') {
+            // Only include tasks where pharmacy is the receiver (assigned to pharmacy)
+            const receiverMatch = task.owner?.reference === `Organization/${pharmacyTelematikId}` ||
+                                 task.for?.reference === `Organization/${pharmacyTelematikId}`;
+            
+            if (receiverMatch && task.status !== 'completed' && task.status !== 'cancelled') {
+              activeRequests.push({
+                id: task.id,
+                type: this.getTaskTypeFromCode(task.code) || 'Dokumentenanfrage',
+                kind: 'document-request',
+                status: task.status,
+                requestDate: task.authoredOn || new Date().toISOString(),
+                lastUpdated: task.lastModified || task.authoredOn || new Date().toISOString(),
+                requesterName: this.getRequesterName(task.requester?.reference) || 'Unbekannt',
+                description: task.description || 'Dokumentenanfrage'
+              });
+            }
           }
-        } catch (error) {
-          // Task doesn't exist, continue
-          break;
         }
       }
-
+      
+      console.log(`✅ Found ${activeRequests.length} active requests for pharmacy`);
       return { requests: activeRequests };
     } catch (error) {
-      console.error('Failed to get active requests:', error);
+      console.error('❌ Error fetching active requests:', error);
       return { requests: [] };
     }
+  }
+
+  // Helper method to get task type from task code
+  private static getTaskTypeFromCode(code: any): string | null {
+    if (!code?.coding) return null;
+    const coding = Array.isArray(code.coding) ? code.coding[0] : code.coding;
+    return coding?.display || coding?.code || null;
+  }
+
+  // Helper method to extract requester name from reference
+  private static getRequesterName(requesterReference: string | undefined): string | null {
+    if (!requesterReference) return null;
+    
+    // Extract telematik-ID from Organization reference
+    const match = requesterReference.match(/Organization\/(.+)/);
+    if (match) {
+      const telematikId = match[1];
+      // Could be enhanced to lookup actual name from contacts or other service
+      return `Anfragender (${telematikId})`;
+    }
+    
+    return null;
+  }
+
+  // Helper method to determine task kind from questionnaire canonical
+  private static getTaskKind(questionnaireCanonical: string | undefined): string | null {
+    if (!questionnaireCanonical) return null;
+    
+    if (questionnaireCanonical.includes('flow-request')) return 'flow-request';
+    if (questionnaireCanonical.includes('document-request')) return 'document-request';
+    
+    return 'flow-request'; // default;
   }
 
   // Get request details with questionnaire response
@@ -459,7 +498,6 @@ export class TiFlowService {
       return null;
     }
   }
-  */
 }
 
 // Export as both named and default export for compatibility

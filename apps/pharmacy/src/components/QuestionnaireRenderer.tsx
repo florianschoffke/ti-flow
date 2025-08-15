@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Questionnaire, QuestionnaireItem, Prescription } from '../types';
-import { tiFlowService } from '../services/tiFlowService';
+import TiFlowService from '../services/tiFlowService';
+import { ContactsService } from '../services/contactsService';
 
 interface QuestionnaireRendererProps {
   questionnaire: Questionnaire;
@@ -20,9 +21,33 @@ interface GroupInstance {
 }
 
 export function QuestionnaireRenderer({ questionnaire, prescription, operationCode, onClose, onRequestSubmitted, readOnly = false }: QuestionnaireRendererProps) {
-  const [formData, setFormData] = useState<FormData>(() => {
-    // Pre-populate form with available data
+  const contactsService = new ContactsService();
+  
+  const [formData, setFormData] = useState<FormData>({});
+  
+  // Use useEffect to populate form data when questionnaire or prescription changes
+  useEffect(() => {
     const initialData: FormData = {};
+    
+    // Debug logging
+    console.log('🔍 QuestionnaireRenderer - Prescription:', prescription);
+    console.log('🔍 QuestionnaireRenderer - Doctor LANR:', prescription?.doctorLanr);
+    
+    // Get contact suggestion from prescription if available
+    let receiverName: string | null = null;
+    let receiverTelematikId: string | null = null;
+    if (prescription?.doctorLanr) {
+      console.log('🔍 Looking up contact for LANR:', prescription.doctorLanr);
+      const suggestionResult = contactsService.getContactSuggestionForLanr(prescription.doctorLanr);
+      console.log('🔍 Suggestion result:', suggestionResult);
+      if (suggestionResult.suggestion) {
+        receiverName = suggestionResult.suggestion.receiverName;
+        receiverTelematikId = suggestionResult.suggestion.receiverTelematikId;
+        console.log('✅ Found contact suggestion:', { receiverName, receiverTelematikId });
+      }
+    } else {
+      console.log('⚠️ No doctor LANR found in prescription');
+    }
     
     questionnaire.item.forEach(item => {
       // First check if there are initial values (submitted data)
@@ -46,12 +71,27 @@ export function QuestionnaireRenderer({ questionnaire, prescription, operationCo
       } else if (item.code?.[0]?.code === 'requester_tid') {
         // Auto-populate TID from pharmacy system
         initialData[item.linkId] = '3-SMC-B-Testkarte-883110000116873';
+      } else if (item.code?.[0]?.code === 'receiver_name' && receiverName) {
+        // Suggest receiver name from contacts
+        initialData[item.linkId] = receiverName;
+        console.log('✅ Setting receiver_name to:', receiverName);
+      } else if (item.code?.[0]?.code === 'receiver_tid') {
+        // Suggest receiver telematik-ID from contacts, or use default for testing
+        if (receiverTelematikId) {
+          initialData[item.linkId] = receiverTelematikId;
+          console.log('✅ Setting receiver_tid from contact to:', receiverTelematikId);
+        } else {
+          // Default receiver for testing - this should be replaced with proper contact selection
+          initialData[item.linkId] = '3-SMC-B-Testkarte-883110000123456';
+          console.log('✅ Setting receiver_tid to default for testing');
+        }
       }
       // Add more pre-population logic as needed
     });
     
-    return initialData;
-  });
+    setFormData(initialData);
+    console.log('🔍 Final form data:', initialData);
+  }, [questionnaire, prescription]); // Re-run when questionnaire or prescription changes
   
   // State for repeating groups
   const [groupInstances, setGroupInstances] = useState<{ [groupLinkId: string]: GroupInstance[] }>({});
@@ -435,7 +475,7 @@ export function QuestionnaireRenderer({ questionnaire, prescription, operationCo
         });
       });
       
-      const result = await tiFlowService.submitFlowRequest(questionnaireResponse);
+      const result = await TiFlowService.submitFlowRequest(questionnaireResponse);
       console.log('✅ Flow request submitted successfully:', result);
       
       // Call the callback to refresh active requests list
