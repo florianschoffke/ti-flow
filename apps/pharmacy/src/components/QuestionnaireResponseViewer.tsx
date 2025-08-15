@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { QuestionnaireResponse } from '../types';
+import { PharmacyInfoService } from '../services/pharmacyInfoService';
 import './QuestionnaireResponseViewer.css';
 
 interface QuestionnaireResponseViewerProps {
@@ -21,6 +22,15 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
         values[item.linkId] = '';
       }
     });
+    
+    // Auto-fill pharmacy information for specific fields
+    if (values['requester_name'] === '' || !values['requester_name']) {
+      values['requester_name'] = PharmacyInfoService.getFormattedPharmacyName();
+    }
+    if (values['requester_tid'] === '' || !values['requester_tid']) {
+      values['requester_tid'] = PharmacyInfoService.getPharmacyTelematikId();
+    }
+    
     return values;
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,6 +114,11 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
     return linkIdMap[linkId] || linkId.replace(/[_-]/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
   };
 
+  // Check if field is auto-filled by pharmacy (AVS)
+  const isPharmacyAutoFilled = (linkId: string): boolean => {
+    return ['requester_name', 'requester_tid'].includes(linkId);
+  };
+
   // Group fields logically
   const getFieldGroups = () => {
     const items = questionnaireResponse.item || [];
@@ -120,16 +135,22 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
       ['prescriber_name', 'prescriber_lanr', 'organization_name'].includes(item.linkId)
     );
     
+    const pharmacyFields = items.filter(item => 
+      ['requester_name', 'requester_tid'].includes(item.linkId)
+    );
+    
     const otherFields = items.filter(item => 
       !['prescription_id', 'medication_name', 'prescription_date', 
         'patient_name', 'patient_kvnr', 
-        'prescriber_name', 'prescriber_lanr', 'organization_name'].includes(item.linkId)
+        'prescriber_name', 'prescriber_lanr', 'organization_name',
+        'requester_name', 'requester_tid'].includes(item.linkId)
     );
 
     return {
       prescription: prescriptionFields,
       patient: patientFields,
       prescriber: prescriberFields,
+      pharmacy: pharmacyFields,
       other: otherFields
     };
   };
@@ -139,20 +160,22 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
   const renderResponseItem = (item: any) => {
     const answer = item.answer?.[0];
     const hasAnswer = answer && (answer.valueString || answer.valueInteger !== undefined);
-    const isEditing = editingFields[item.linkId] || !hasAnswer;
+    const isPharmacyFilled = isPharmacyAutoFilled(item.linkId);
+    const isEditing = editingFields[item.linkId] || (!hasAnswer && !isPharmacyFilled);
     const currentValue = fieldValues[item.linkId] || '';
     const fieldType = getFieldType(item.linkId);
     const questionText = getQuestionText(item.linkId);
 
     return (
-      <div key={item.linkId} className={`questionnaire-response-item ${hasAnswer ? 'has-answer' : 'no-answer'}`}>
+      <div key={item.linkId} className={`questionnaire-response-item ${hasAnswer || isPharmacyFilled ? 'has-answer' : 'no-answer'} ${isPharmacyFilled ? 'pharmacy-filled' : ''}`}>
         <div className="question-header">
           <label className="question-label">
             {questionText}
             <span className="required-indicator">*</span>
           </label>
           
-          {hasAnswer && (
+          {/* Show edit button only for non-pharmacy fields that have answers */}
+          {hasAnswer && !isPharmacyFilled && (
             <button
               type="button"
               className={`edit-toggle-btn ${isEditing ? 'editing' : ''}`}
@@ -163,13 +186,16 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
             </button>
           )}
           
-          {hasAnswer && !isEditing && (
+          {/* Show appropriate badge based on field type */}
+          {isPharmacyFilled ? (
+            <span className="pharmacy-filled-badge">🏥 Vom AVS ausgefüllt</span>
+          ) : hasAnswer && !isEditing && (
             <span className="prefilled-badge">🔄 Automatisch ausgefüllt</span>
           )}
         </div>
 
         <div className="question-input-container">
-          {isEditing ? (
+          {isEditing && !isPharmacyFilled ? (
             <>
               {fieldType === 'text' ? (
                 <textarea
@@ -208,8 +234,13 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
               )}
             </>
           ) : (
-            <div className="question-display-value">
+            <div className={`question-display-value ${isPharmacyFilled ? 'pharmacy-readonly' : ''}`}>
               {currentValue || 'Keine Antwort'}
+              {isPharmacyFilled && (
+                <span className="readonly-indicator">
+                  🔒 Schreibgeschützt
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -234,6 +265,7 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
               <div className="info-text">
                 <strong>Bearbeitbarer Fragebogen</strong>
                 <p>Automatisch ausgefüllte Felder können mit dem ✏️ Icon bearbeitet werden. 
+                   🏥 Vom AVS ausgefüllte Felder sind schreibgeschützt.
                    Leere Felder sind sofort bearbeitbar.</p>
               </div>
             </div>
@@ -275,6 +307,19 @@ export function QuestionnaireResponseViewer({ questionnaireResponse, onClose, on
                 </h3>
                 <div className="group-content">
                   {fieldGroups.prescriber.map(renderResponseItem)}
+                </div>
+              </div>
+            )}
+
+            {/* Pharmacy Information Group */}
+            {fieldGroups.pharmacy.length > 0 && (
+              <div className="questionnaire-response-group">
+                <h3 className="group-title">
+                  <span className="group-icon">🏥</span>
+                  Apothekendaten (AVS)
+                </h3>
+                <div className="group-content">
+                  {fieldGroups.pharmacy.map(renderResponseItem)}
                 </div>
               </div>
             )}
