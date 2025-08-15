@@ -1,35 +1,12 @@
 import { useState, useEffect } from 'react';
 import { TiFlowService } from '../services/tiFlowService';
 import { PharmacyInfoService } from '../services/pharmacyInfoService';
-import { QuestionnaireResponseViewer } from './QuestionnaireResponseViewer';
+import { QuestionnaireResponseViewer } from './QuestionnaireR                            <AnimatedDownloadButton 
+                              prescriptionId={prescriptionId}
+                              prescriptionSecret={prescriptionSecret}
+                            />ewer';
+import { AnimatedDownloadButton } from './AnimatedDownloadButton';
 import type { FlowTask, QuestionnaireResponse } from '../types';
-
-// Add CSS for spinner animation
-const spinnerCSS = `
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  .download-btn-loading {
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #3498db;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto;
-  }
-
-  .download-btn-checkmark {
-    color: white;
-    font-size: 16px;
-  }
-
-  .download-btn-checkmark::before {
-    content: '✓';
-  }
-`;
 
 export function TaskList() {
   const [tasks, setTasks] = useState<FlowTask[]>([]);
@@ -39,16 +16,6 @@ export function TaskList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedTask, setSelectedTask] = useState<FlowTask | null>(null);
-
-  // Add CSS for animations
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = spinnerCSS;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
 
   useEffect(() => {
     loadTasks();
@@ -271,38 +238,9 @@ export function TaskList() {
                           </div>
                           <div className="download-section">
                             <button 
-                              onClick={async (e) => {
-                                const button = e.target as HTMLButtonElement;
-                                const originalText = button.innerHTML;
-                                
-                                // Loading state
-                                button.innerHTML = '<span style="display: inline-block; width: 20px; height: 20px; border: 2px solid #ffffff40; border-top: 2px solid #ffffff; border-radius: 50%; animation: spin 1s linear infinite;"></span>';
-                                button.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
-                                button.disabled = true;
-                                
-                                try {
-                                  // Simulate API call
-                                  await new Promise(resolve => setTimeout(resolve, 2000));
-                                  
-                                  // Success state
-                                  button.innerHTML = '✓ Erfolgreich abgerufen';
-                                  button.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-                                  
-                                  console.log(`E-Rezept erfolgreich abgerufen:\nID: ${prescriptionId}\nSecret: ${prescriptionSecret}`);
-                                  
-                                  // Reset after 3 seconds
-                                  setTimeout(() => {
-                                    button.innerHTML = originalText;
-                                    button.style.background = '';
-                                    button.disabled = false;
-                                  }, 3000);
-                                  
-                                } catch (error) {
-                                  button.innerHTML = originalText;
-                                  button.style.background = '';
-                                  button.disabled = false;
-                                  console.error('Fehler beim Abrufen des E-Rezepts:', error);
-                                }
+                              onClick={() => {
+                                // TODO: Implement e-prescription retrieval functionality
+                                alert(`E-Rezept wird abgerufen:\nID: ${prescriptionId}\nSecret: ${prescriptionSecret}`);
                               }}
                               className="download-button"
                             >
