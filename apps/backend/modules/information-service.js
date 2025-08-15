@@ -169,27 +169,316 @@ class InformationService {
   }
 
   /**
-   * Get a specific questionnaire by operation code
-   * @param {string} code - The operation code
-   * @returns {Object|null} The questionnaire or null if not found
+   * Get questionnaire by ID (looks for questionnaire with matching id field)
+   * @param {string} questionnaireId - Questionnaire ID
+   * @returns {Object|null} Questionnaire or null if not found
    */
-  getQuestionnaireByCode(code) {
+  getQuestionnaireById(questionnaireId) {
     try {
-      const formFileName = `${code}-form.json`;
-      const formPath = join(this.formsPath, 'request-operations', formFileName);
-      
-      if (!existsSync(formPath)) {
-        console.error(`Questionnaire form not found: ${formPath}`);
-        return null;
+      // First try to find questionnaire by exact ID match in e16A folder
+      const e16APath = join(this.formsPath, 'e16A');
+      if (existsSync(e16APath)) {
+        const files = readdirSync(e16APath).filter(f => f.endsWith('.json'));
+        for (const file of files) {
+          const filePath = join(e16APath, file);
+          try {
+            const data = readFileSync(filePath, 'utf8');
+            const questionnaire = JSON.parse(data);
+            if (questionnaire.id === questionnaireId) {
+              console.log(`📋 Found questionnaire by ID: ${questionnaireId} in ${file}`);
+              return questionnaire;
+            }
+          } catch (error) {
+            console.warn(`Warning: Could not parse ${file}:`, error.message);
+          }
+        }
       }
-      
-      const data = readFileSync(formPath, 'utf8');
-      return JSON.parse(data);
+
+      // Try other directories
+      const directories = readdirSync(this.formsPath, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name);
+
+      for (const dir of directories) {
+        if (dir === 'e16A') continue; // Already checked
+        
+        const dirPath = join(this.formsPath, dir);
+        if (existsSync(dirPath)) {
+          const files = readdirSync(dirPath).filter(f => f.endsWith('.json'));
+          for (const file of files) {
+            const filePath = join(dirPath, file);
+            try {
+              const data = readFileSync(filePath, 'utf8');
+              const questionnaire = JSON.parse(data);
+              if (questionnaire.id === questionnaireId) {
+                console.log(`📋 Found questionnaire by ID: ${questionnaireId} in ${dir}/${file}`);
+                return questionnaire;
+              }
+            } catch (error) {
+              console.warn(`Warning: Could not parse ${dir}/${file}:`, error.message);
+            }
+          }
+        }
+      }
+
+      // Fallback: try by code matching (legacy behavior)
+      console.log(`📋 No questionnaire found with ID ${questionnaireId}, trying by code...`);
+      return this.getQuestionnaireByCode(questionnaireId);
+
     } catch (error) {
-      console.error(`Error reading questionnaire for code ${code}:`, error);
+      console.error(`Error loading questionnaire for ID ${questionnaireId}:`, error);
       return null;
     }
   }
+
+  /**
+   * Get questionnaire by operation code
+   * @param {string} code - Operation code
+   * @returns {Object|null} Questionnaire or null if not found
+   */
+  getQuestionnaireByCode(code) {
+    try {
+      const formPath = join(this.formsPath, 'request-operations', `${code}-form.json`);
+      
+      if (existsSync(formPath)) {
+        const formData = readFileSync(formPath, 'utf8');
+        return JSON.parse(formData);
+      }
+
+      // Try other form directories
+      const requestOpsCS = this.getRequestOperations();
+      for (const concept of requestOpsCS.concept) {
+        const altFormPath = join(this.formsPath, concept.code, `${code}-form.json`);
+        if (existsSync(altFormPath)) {
+          const formData = readFileSync(altFormPath, 'utf8');
+          return JSON.parse(formData);
+        }
+      }
+
+      // Try document operations forms
+      const docOpsCS = this.getDocumentOperations();
+      for (const concept of docOpsCS.concept) {
+        if (concept.concept) {
+          for (const subConcept of concept.concept) {
+            if (subConcept.code === code) {
+              const formPath = join(this.formsPath, concept.code, `${code}-form.json`);
+              if (existsSync(formPath)) {
+                const formData = readFileSync(formPath, 'utf8');
+                return JSON.parse(formData);
+              }
+            }
+          }
+        } else if (concept.code === code) {
+          const formPath = join(this.formsPath, concept.code, `${code}-form.json`);
+          if (existsSync(formPath)) {
+            const formData = readFileSync(formPath, 'utf8');
+            return JSON.parse(formData);
+          }
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error(`Error loading questionnaire for code ${code}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Populate a QuestionnaireResponse using SDC expression-based population
+   * @param {Object} questionnaire - FHIR Questionnaire
+   * @param {Object} fhirBundle - FHIR Bundle with resources for population
+   * @returns {Object} Populated FHIR QuestionnaireResponse
+   */
+  populateQuestionnaireResponse(questionnaire, fhirBundle) {
+    const responseId = `populated-${Date.now()}`;
+    
+    const response = {
+      resourceType: 'QuestionnaireResponse',
+      id: responseId,
+      meta: {
+        profile: [
+          'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaireresponse'
+        ]
+      },
+      status: 'in-progress',
+      questionnaire: questionnaire.url || `Questionnaire/${questionnaire.id}`,
+      authored: new Date().toISOString(),
+      item: []
+    };
+
+    // Process each questionnaire item
+    if (questionnaire.item) {
+      for (const item of questionnaire.item) {
+        const responseItem = this.populateItem(item, fhirBundle);
+        if (responseItem) {
+          response.item.push(responseItem);
+        }
+      }
+    }
+
+    return response;
+  }
+
+  /**
+   * Populate a single questionnaire item using FHIRPath expressions
+   * @param {Object} item - Questionnaire item
+   * @param {Object} fhirBundle - FHIR Bundle for population context
+   * @returns {Object|null} Populated response item or null
+   */
+  populateItem(item, fhirBundle) {
+    const responseItem = {
+      linkId: item.linkId,
+      text: item.text
+    };
+
+    // Look for initialExpression extension
+    const initialExpression = item.extension?.find(ext => 
+      ext.url === 'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression'
+    );
+
+    if (initialExpression && initialExpression.valueExpression) {
+      try {
+        // Simple FHIRPath expression evaluation for common patterns
+        const expression = initialExpression.valueExpression.expression;
+        const populatedValue = this.evaluateSimpleFHIRPath(expression, fhirBundle);
+        
+        if (populatedValue !== null && populatedValue !== undefined && populatedValue !== '') {
+          // Create answer based on item type
+          const answer = this.createAnswerForType(item.type, populatedValue);
+          if (answer) {
+            responseItem.answer = [answer];
+          }
+        }
+      } catch (error) {
+        console.warn(`Failed to evaluate expression for item ${item.linkId}:`, error.message);
+      }
+    }
+
+    return responseItem;
+  }
+
+  /**
+   * Simple FHIRPath expression evaluator for common patterns
+   * @param {string} expression - FHIRPath expression
+   * @param {Object} bundle - FHIR Bundle
+   * @returns {string|null} Evaluated value or null
+   */
+  evaluateSimpleFHIRPath(expression, bundle) {
+    try {
+      // Replace %resource with the bundle context
+      const context = bundle;
+      
+      // Patient name concatenation
+      if (expression.includes("resourceType='Patient'") && expression.includes('name') && expression.includes('family') && expression.includes('given')) {
+        const patient = context.entry?.find(e => e.resource?.resourceType === 'Patient')?.resource;
+        if (patient?.name) {
+          const officialName = patient.name.find(n => n.use === 'official') || patient.name[0];
+          if (officialName) {
+            const family = officialName.family || '';
+            const given = Array.isArray(officialName.given) ? officialName.given.join(' ') : (officialName.given || '');
+            return `${family}, ${given}`.trim().replace(/^,\s*/, '').replace(/,\s*$/, '');
+          }
+        }
+      }
+
+      // Patient KVNR
+      if (expression.includes("resourceType='Patient'") && expression.includes("type.coding.code='KVZ10'")) {
+        const patient = context.entry?.find(e => e.resource?.resourceType === 'Patient')?.resource;
+        const kvnrIdentifier = patient?.identifier?.find(id => 
+          id.type?.coding?.some(c => c.code === 'KVZ10')
+        );
+        return kvnrIdentifier?.value || null;
+      }
+
+      // Prescription ID
+      if (expression.includes('identifier') && expression.includes('GEM_ERP_NS_PrescriptionId')) {
+        // Bundle.identifier is a single object, not an array
+        const prescriptionId = context.identifier;
+        if (prescriptionId?.system === 'https://gematik.de/fhir/erp/NamingSystem/GEM_ERP_NS_PrescriptionId') {
+          return prescriptionId.value || null;
+        }
+        return null;
+      }
+
+      // Medication name
+      if (expression.includes("resourceType='Medication'") && expression.includes('code.text')) {
+        const medication = context.entry?.find(e => e.resource?.resourceType === 'Medication')?.resource;
+        return medication?.code?.text || null;
+      }
+
+      // Practitioner name
+      if (expression.includes("resourceType='Practitioner'") && expression.includes('name')) {
+        const practitioner = context.entry?.find(e => e.resource?.resourceType === 'Practitioner')?.resource;
+        if (practitioner?.name) {
+          const officialName = practitioner.name.find(n => n.use === 'official') || practitioner.name[0];
+          if (officialName) {
+            const prefix = Array.isArray(officialName.prefix) ? officialName.prefix.join(' ') : (officialName.prefix || '');
+            const given = Array.isArray(officialName.given) ? officialName.given.join(' ') : (officialName.given || '');
+            const family = officialName.family || '';
+            return `${prefix} ${given} ${family}`.trim();
+          }
+        }
+      }
+
+      // Practitioner LANR
+      if (expression.includes("resourceType='Practitioner'") && expression.includes("type.coding.code='LANR'")) {
+        const practitioner = context.entry?.find(e => e.resource?.resourceType === 'Practitioner')?.resource;
+        const lanrIdentifier = practitioner?.identifier?.find(id =>
+          id.type?.coding?.some(c => c.code === 'LANR')
+        );
+        return lanrIdentifier?.value || null;
+      }
+
+      // Organization name
+      if (expression.includes("resourceType='Organization'") && expression.includes('name')) {
+        const organization = context.entry?.find(e => e.resource?.resourceType === 'Organization')?.resource;
+        return organization?.name || null;
+      }
+
+      // MedicationRequest authoredOn
+      if (expression.includes("resourceType='MedicationRequest'") && expression.includes('authoredOn')) {
+        const medicationRequest = context.entry?.find(e => e.resource?.resourceType === 'MedicationRequest')?.resource;
+        return medicationRequest?.authoredOn || null;
+      }
+
+      return null;
+    } catch (error) {
+      console.warn('Error evaluating FHIRPath expression:', error.message);
+      return null;
+    }
+  }
+
+  /**
+   * Create answer object based on item type
+   * @param {string} type - Question item type
+   * @param {*} value - Value to set
+   * @returns {Object|null} Answer object
+   */
+  createAnswerForType(type, value) {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    switch (type) {
+      case 'string':
+      case 'text':
+        return { valueString: String(value) };
+      case 'date':
+        return { valueDate: value };
+      case 'dateTime':
+        return { valueDateTime: value };
+      case 'boolean':
+        return { valueBoolean: Boolean(value) };
+      case 'integer':
+        return { valueInteger: parseInt(value) };
+      case 'decimal':
+        return { valueDecimal: parseFloat(value) };
+      default:
+        return { valueString: String(value) };
+    }
+  }
+
 }
 
 /**
@@ -305,15 +594,191 @@ export function setupInformationService(app, registerEndpoint) {
     }
   });
 
+  // Populate endpoint - new SDC-compliant version  
+  app.post('/Questionnaire/:id/\\$populate', (req, res) => {
+    try {
+      console.log('🔄 Processing SDC $populate request');
+      const questionnaireId = req.params.id;
+      const fhirParameters = req.body;
+      
+      console.log(`🎯 Smart endpoint: Looking for questionnaire with ID: ${questionnaireId}`);
+      
+      // Validate basic FHIR Parameters structure
+      if (!fhirParameters || fhirParameters.resourceType !== 'Parameters') {
+        return res.status(400).json({
+          error: 'Invalid request format',
+          message: 'Request body must be a FHIR Parameters resource'
+        });
+      }
+
+      if (!fhirParameters.parameter || !Array.isArray(fhirParameters.parameter)) {
+        return res.status(400).json({
+          error: 'Invalid parameters',
+          message: 'Parameters array is required'
+        });
+      }
+
+      // Find the context parameter
+      const contextParam = fhirParameters.parameter.find(p => p.name === 'context');
+      if (!contextParam || !contextParam.part) {
+        return res.status(400).json({
+          error: 'Missing context parameter',
+          message: 'context parameter with parts is required'
+        });
+      }
+
+      // Extract context.name and context.content
+      let contextName = null;
+      let contextContent = null;
+
+      for (const part of contextParam.part) {
+        if (part.name === 'name' && part.valueString) {
+          contextName = part.valueString;
+        } else if (part.name === 'content' && part.resource) {
+          contextContent = part.resource;
+        }
+      }
+
+      if (!contextContent) {
+        return res.status(400).json({
+          error: 'Missing context content',
+          message: 'context.content (resource) is required'
+        });
+      }
+
+      console.log(` Context name: ${contextName || 'not specified'}`);
+      console.log(`📦 Context content: ${contextContent.resourceType || 'unknown'} with ${contextContent.entry?.length || 0} entries`);
+
+      // Smart questionnaire lookup by ID
+      const questionnaire = informationService.getQuestionnaireById(questionnaireId);
+      if (!questionnaire) {
+        return res.status(404).json({
+          error: 'Questionnaire not found',
+          message: `No questionnaire found with ID: ${questionnaireId}`
+        });
+      }
+
+      console.log(`✅ Found questionnaire: ${questionnaire.title || questionnaire.id}`);
+
+      // Populate the questionnaire response
+      const populatedResponse = informationService.populateQuestionnaireResponse(questionnaire, contextContent);
+
+      // Return the response in SDC Parameters format
+      const parametersResponse = {
+        resourceType: 'Parameters',
+        id: `populate-response-${Date.now()}`,
+        meta: {
+          profile: [
+            'http://hl7.org/fhir/uv/sdc/StructureDefinition/parameters'
+          ]
+        },
+        parameter: [
+          {
+            name: 'response',
+            resource: populatedResponse
+          }
+        ]
+      };
+
+      res.setHeader('Content-Type', 'application/fhir+json');
+      res.json(parametersResponse);
+      
+    } catch (error) {
+      console.error('Error processing populate request:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not process populate request: ' + error.message
+      });
+    }
+  });
+
+  // Legacy populate endpoint - keep for backward compatibility
+  app.post('/\\$populate', (req, res) => {
+    try {
+      console.log('🔄 Processing legacy populate request');
+      const fhirParameters = req.body;
+      
+      // Validate basic FHIR Parameters structure
+      if (!fhirParameters || fhirParameters.resourceType !== 'Parameters') {
+        return res.status(400).json({
+          error: 'Invalid request format',
+          message: 'Request body must be a FHIR Parameters resource'
+        });
+      }
+
+      if (!fhirParameters.parameter || !Array.isArray(fhirParameters.parameter)) {
+        return res.status(400).json({
+          error: 'Invalid parameters',
+          message: 'Parameters array is required'
+        });
+      }
+
+      // Extract questionnaireId and fhirResources from parameters (legacy format)
+      let questionnaireId = null;
+      let fhirBundle = null;
+
+      for (const param of fhirParameters.parameter) {
+        if (param.name === 'questionaireId' && param.valueCoding) {
+          questionnaireId = param.valueCoding.code;
+        } else if (param.name === 'fhirResources' && param.resource) {
+          fhirBundle = param.resource;
+        }
+      }
+
+      if (!questionnaireId) {
+        return res.status(400).json({
+          error: 'Missing required parameter',
+          message: 'questionaireId parameter with valueCoding is required'
+        });
+      }
+
+      if (!fhirBundle) {
+        return res.status(400).json({
+          error: 'Missing required parameter',
+          message: 'fhirResources parameter with resource is required'
+        });
+      }
+
+      console.log(`📋 Populating questionnaire: ${questionnaireId}`);
+      console.log(`📦 Received ${fhirBundle.resourceType || 'unknown'} resource with ${fhirBundle.entry?.length || 0} entries`);
+
+      // Load the questionnaire
+      const questionnaire = informationService.getQuestionnaireByCode(questionnaireId);
+      if (!questionnaire) {
+        return res.status(404).json({
+          error: 'Questionnaire not found',
+          message: `No questionnaire found for code: ${questionnaireId}`
+        });
+      }
+
+      // Populate the questionnaire response
+      const populatedResponse = informationService.populateQuestionnaireResponse(questionnaire, fhirBundle);
+
+      res.setHeader('Content-Type', 'application/fhir+json');
+      res.json(populatedResponse);
+      
+    } catch (error) {
+      console.error('Error processing populate request:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not process populate request: ' + error.message
+      });
+    }
+  });
+
   // Register endpoints for documentation
   if (registerEndpoint) {
     registerEndpoint('Information Service', 'GET', '/$document-operations', 'FHIR DocumentOperations CodeSystem');
     registerEndpoint('Information Service', 'GET', '/$request-operations', 'FHIR RequestOperations CodeSystem');
+    registerEndpoint('Information Service', 'POST', '/Questionnaire/:id/$populate', 'SDC $populate operation for questionnaires');
+    registerEndpoint('Information Service', 'POST', '/$populate', 'Legacy populate endpoint');
   }
 
   console.log('✅ Information Service module loaded');
   console.log('📋 Document Operations endpoint: /\\$document-operations');
   console.log('📋 Request Operations endpoint: /\\$request-operations');
+  console.log('🔄 SDC Populate endpoint: /Questionnaire/:id/\\$populate');
+  console.log('🔄 Legacy Populate endpoint: /\\$populate');
 }
 
 export { InformationService };

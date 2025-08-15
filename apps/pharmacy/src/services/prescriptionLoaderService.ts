@@ -27,6 +27,15 @@ export class PrescriptionLoaderService {
       const loadPromises = this.prescriptionFiles.map(async (filePath) => {
         try {
           console.log(`🔄 Loading prescription from: ${filePath}`);
+          
+          // Test if file is accessible first
+          const testResponse = await fetch(filePath);
+          console.log(`📂 File ${filePath} response status: ${testResponse.status}`);
+          
+          if (!testResponse.ok) {
+            throw new Error(`File not accessible: ${testResponse.status} ${testResponse.statusText}`);
+          }
+          
           const parsedData = await MinimalFhirParser.parsePrescriptionFile(filePath);
           
           // Add unique patients
@@ -41,15 +50,32 @@ export class PrescriptionLoaderService {
           console.log(`✅ Successfully loaded prescription: ${parsedData.prescription.medication}`);
         } catch (error) {
           console.error(`❌ Failed to load prescription from ${filePath}:`, error);
+          console.error(`❌ Error details:`, error instanceof Error ? error.message : String(error));
+          
+          // Add error details to help debugging
+          if (error instanceof Error && error.message.includes('Failed to fetch')) {
+            console.error(`❌ Network error - file may not be accessible: ${filePath}`);
+          }
+          
           // Continue loading other files even if one fails
         }
       });
 
-      await Promise.all(loadPromises);
+      const results = await Promise.allSettled(loadPromises);
+      
+      // Log results
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.error(`❌ File ${this.prescriptionFiles[index]} failed:`, result.reason);
+        } else {
+          console.log(`✅ File ${this.prescriptionFiles[index]} loaded successfully`);
+        }
+      });
 
       // If no prescriptions were loaded, use hardcoded fallback
       if (prescriptions.length === 0) {
         console.warn('⚠️ No prescriptions could be loaded from FHIR files, using hardcoded fallback data');
+        console.warn('⚠️ This usually means there were parsing errors in all files');
         return { ...this.getHardcodedFallbackData(), fhirBundles: [] };
       }
 

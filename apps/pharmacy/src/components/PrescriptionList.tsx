@@ -1,5 +1,6 @@
 import type { Prescription, CodeSystemConcept, FhirBundle } from '../types';
 import { FlowOperationsDropdown } from './FlowOperationsDropdown';
+import { PrescriptionLoaderService } from '../services/prescriptionLoaderService';
 
 interface PrescriptionListProps {
   prescriptions: Prescription[];
@@ -28,9 +29,8 @@ export function PrescriptionList({ prescriptions, availableOperations, fhirBundl
     return matchingConcept?.concept || [];
   };
 
-  // Helper function to get FHIR bundle for a prescription (for future questionnaire use)
-  const getFhirBundleForPrescription = (prescriptionId: string) => {
-    return fhirBundles?.find(bundle => bundle.prescriptionId === prescriptionId);
+  const getFhirBundleForPrescription = (prescriptionId: string): FhirBundle | undefined => {
+    return PrescriptionLoaderService.getFhirBundleForPrescription(prescriptionId, fhirBundles || []) || undefined;
   };
 
   return (
@@ -39,6 +39,7 @@ export function PrescriptionList({ prescriptions, availableOperations, fhirBundl
       <div className="prescriptions">
         {prescriptions.map((prescription) => {
           const operations = getOperationsForPrescription(prescription);
+          const prescriptionFhirBundle = getFhirBundleForPrescription(prescription.id);
           
           return (
             <div key={prescription.id} className="prescription-card">
@@ -52,6 +53,7 @@ export function PrescriptionList({ prescriptions, availableOperations, fhirBundl
                     <FlowOperationsDropdown 
                       prescription={prescription}
                       availableOperations={operations}
+                      fhirBundle={prescriptionFhirBundle}
                       onRequestSubmitted={onRequestSubmitted}
                     />
                   ) : (

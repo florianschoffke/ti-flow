@@ -1,0 +1,543 @@
+openapi: 3.0.3
+info:
+  title: TI-Flow Service API
+  description: Backend API for the TI-Flow proof-of-concept pharmacy application
+  version: 1.0.0
+  contact:
+    name: TI-Flow Team
+
+servers:
+  - url: http://localhost:3001
+    description: Development server
+
+paths:
+  # Health & Status endpoints
+  /health:
+    get:
+      tags:
+        - Health & Status
+      summary: Basic health check
+      description: Returns basic health status of the service
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  service:
+                    type: string
+                    example: ti-flow-service
+                  version:
+                    type: string
+                    example: 1.0.0
+                  timestamp:
+                    type: string
+                    format: date-time
+                  uptime:
+                    type: string
+                    example: 1h 23m 45s
+
+  /status:
+    get:
+      tags:
+        - Health & Status
+      summary: Detailed system status
+      description: Returns comprehensive system information and status
+      responses:
+        '200':
+          description: Detailed system status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: operational
+                  service:
+                    type: string
+                  version:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  uptime:
+                    type: string
+                  startTime:
+                    type: string
+                    format: date-time
+                  system:
+                    type: object
+                  endpoints:
+                    type: object
+
+  # Information Service endpoints
+  /$document-operations:
+    get:
+      tags:
+        - Information Service
+      summary: Get document operations CodeSystem
+      description: Returns FHIR DocumentOperations CodeSystem
+      responses:
+        '200':
+          description: FHIR DocumentOperations CodeSystem
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+        '500':
+          description: Internal server error
+
+  /$request-operations:
+    get:
+      tags:
+        - Information Service
+      summary: Get request operations CodeSystem or specific questionnaire
+      description: Returns FHIR RequestOperations CodeSystem or specific questionnaire if code parameter is provided
+      parameters:
+        - name: code
+          in: query
+          required: false
+          description: Operation code to get specific questionnaire
+          schema:
+            type: string
+      responses:
+        '200':
+          description: FHIR RequestOperations CodeSystem or Questionnaire
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+        '404':
+          description: Questionnaire not found for specified code
+        '500':
+          description: Internal server error
+
+  # Populate and Transform endpoints
+  /Questionnaire/{id}/$populate:
+    post:
+      tags:
+        - Transformation Service
+      summary: Populate questionnaire with FHIR resources
+      description: SDC $populate operation - Accepts FHIR Parameters with context containing resources, returns a partially populated FHIR QuestionnaireResponse
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Questionnaire ID
+          schema:
+            type: string
+            example: e16A-korrektur
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              type: object
+              required:
+                - resourceType
+                - parameter
+              properties:
+                resourceType:
+                  type: string
+                  example: Parameters
+                id:
+                  type: string
+                  example: PopulateParametersExample
+                meta:
+                  type: object
+                  properties:
+                    profile:
+                      type: array
+                      items:
+                        type: string
+                      example: ["http://hl7.org/fhir/uv/sdc/StructureDefinition/parameters"]
+                parameter:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        enum: [context]
+                      part:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              enum: [name, content]
+                            valueString:
+                              type: string
+                            resource:
+                              type: object
+                              description: FHIR Bundle containing resources for population
+                  example:
+                    - name: context
+                      part:
+                        - name: name
+                          valueString: e16A
+                        - name: content
+                          resource:
+                            resourceType: Bundle
+                            entry: []
+      responses:
+        '200':
+          description: SDC Parameters response containing populated QuestionnaireResponse
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+                properties:
+                  resourceType:
+                    type: string
+                    example: Parameters
+                  id:
+                    type: string
+                    example: populate-response-1234567890
+                  meta:
+                    type: object
+                    properties:
+                      profile:
+                        type: array
+                        items:
+                          type: string
+                        example: ["http://hl7.org/fhir/uv/sdc/StructureDefinition/parameters"]
+                  parameter:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: response
+                        resource:
+                          type: object
+                          description: Populated FHIR QuestionnaireResponse
+                          properties:
+                            resourceType:
+                              type: string
+                              example: QuestionnaireResponse
+                            status:
+                              type: string
+                              example: in-progress
+                            item:
+                              type: array
+                              description: Populated questionnaire items
+        '400':
+          description: Invalid FHIR Parameters format or questionnaire ID
+        '404':
+          description: Questionnaire not found
+        '500':
+          description: Internal server error
+
+  # Flow Service endpoints
+  /Task:
+    get:
+      tags:
+        - Flow Service
+      summary: Get all tasks for a user
+      description: Returns all tasks for the specified user
+      parameters:
+        - name: user
+          in: query
+          required: true
+          description: User identifier to filter tasks
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of tasks for the user
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+                properties:
+                  resourceType:
+                    type: string
+                    example: Bundle
+                  entry:
+                    type: array
+                    items:
+                      type: object
+        '400':
+          description: Missing user parameter
+
+  /Task/$request:
+    post:
+      tags:
+        - Flow Service
+      summary: Create new flow request
+      description: Creates a new flow request with questionnaire response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - requester
+                - receiver
+                - questionnaireResponse
+              properties:
+                requester:
+                  type: string
+                  description: User creating the request
+                receiver:
+                  type: string
+                  description: User receiving the request
+                questionnaireResponse:
+                  type: object
+                  description: FHIR QuestionnaireResponse data
+      responses:
+        '201':
+          description: Request created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  taskId:
+                    type: string
+                  questionnaireResponseId:
+                    type: string
+                  task:
+                    type: object
+        '400':
+          description: Invalid request data
+
+  /Task/{id}:
+    get:
+      tags:
+        - Flow Service
+      summary: Get task status
+      description: Returns task status as FHIR Task resource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: FHIR Task resource
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+        '404':
+          description: Task not found
+
+  /Task/{id}/$counter-offer:
+    post:
+      tags:
+        - Flow Service
+      summary: Submit counter-offer
+      description: Submit counter-offer with updated questionnaire
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+        - name: x-actor-id
+          in: header
+          required: true
+          description: Actor identification
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - questionnaireResponse
+              properties:
+                questionnaireResponse:
+                  type: object
+                  description: Updated FHIR QuestionnaireResponse
+      responses:
+        '200':
+          description: Counter-offer submitted successfully
+        '400':
+          description: Invalid operation or missing data
+        '500':
+          description: Internal server error
+
+  /Task/{id}/$reject:
+    post:
+      tags:
+        - Flow Service
+      summary: Reject request
+      description: Reject a flow request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+        - name: x-actor-id
+          in: header
+          required: true
+          description: Actor identification
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task rejected successfully
+        '400':
+          description: Invalid operation or missing actor
+        '500':
+          description: Internal server error
+
+  /Task/{id}/$accept:
+    post:
+      tags:
+        - Flow Service
+      summary: Accept request
+      description: Accept a flow request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+        - name: x-actor-id
+          in: header
+          required: true
+          description: Actor identification
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task accepted successfully
+        '400':
+          description: Invalid operation or missing actor
+        '500':
+          description: Internal server error
+
+  /Task/{id}/$close:
+    post:
+      tags:
+        - Flow Service
+      summary: Close/complete request
+      description: Close or complete a request with document data
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+        - name: x-actor-id
+          in: header
+          required: true
+          description: Actor identification
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - docId
+                - docPw
+              properties:
+                docId:
+                  type: string
+                  description: Document ID
+                docPw:
+                  type: string
+                  description: Document password
+      responses:
+        '200':
+          description: Task completed successfully
+        '400':
+          description: Invalid operation or missing data
+        '500':
+          description: Internal server error
+
+  /Questionnaire/{id}:
+    get:
+      tags:
+        - Flow Service
+      summary: Get questionnaire
+      description: Returns questionnaire as FHIR Questionnaire resource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Questionnaire ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: FHIR Questionnaire resource
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+        '404':
+          description: Questionnaire not found
+
+  /QuestionnaireResponse/{id}:
+    get:
+      tags:
+        - Flow Service
+      summary: Get questionnaire response
+      description: Returns questionnaire response as FHIR QuestionnaireResponse resource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: QuestionnaireResponse ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: FHIR QuestionnaireResponse resource
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+        '404':
+          description: QuestionnaireResponse not found
+
+tags:
+  - name: Health & Status
+    description: Service health and status monitoring
+  - name: Information Service
+    description: FHIR CodeSystems and operational information
+  - name: Transformation Service
+    description: FHIR resource transformation and population services
+  - name: Flow Service
+    description: Task and workflow management with FHIR resources
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message

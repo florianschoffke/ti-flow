@@ -1,12 +1,19 @@
 {
   "resourceType": "Questionnaire",
+  "id": "e16A-korrektur",
   "meta": {
     "profile": [
-      "http://hl7.org/fhir/4.0/StructureDefinition/Questionnaire"
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-populate"
     ]
   },
+  "url": "http://gematik.de/fhir/ti-flow/Questionnaire/e16A-korrektur",
+  "version": "1.0.0",
   "title": "Korrektur eines Muster 16",
-  "status": "draft",
+  "status": "active",
+  "experimental": false,
+  "date": "2025-08-14",
+  "publisher": "gematik GmbH",
+  "description": "Questionnaire for requesting corrections to an e16A prescription (Muster 16)",
   "code": [
     {
       "system": "https://gematik.de/fhir/erezept-api-examples/CodeSystem/flow-operation-forms-cs",
@@ -17,70 +24,250 @@
   "item": [
     {
       "type": "string",
-      "linkId": "744113603020",
+      "linkId": "patient_name",
       "code": [
         {
           "system": "http://gematik.de/CS_e16A_Codes",
           "code": "patient_name"
         }
       ],
-      "text": "Name des Patienten"
+      "text": "Name des Patienten",
+      "required": true,
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%resource.entry.resource.where(resourceType='Patient').name.where(use='official').family + ', ' + %resource.entry.resource.where(resourceType='Patient').name.where(use='official').given.join(' ')"
+          }
+        }
+      ]
     },
     {
-      "type": "string",
-      "linkId": "126520044506",
+      "type": "string", 
+      "linkId": "patient_kvnr",
       "code": [
         {
           "system": "http://gematik.de/CS_e16A_Codes",
-          "code": "requester_name"
+          "code": "patient_kvnr"
         }
       ],
-      "text": "Name des Anfragenden"
-    },
-    {
-      "type": "string",
-      "linkId": "505738877644",
-      "code": [
+      "text": "Krankenversichertennummer des Patienten",
+      "required": true,
+      "extension": [
         {
-          "system": "http://gematik.de/CS_e16A_Codes",
-          "code": "requester_tid"
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%resource.entry.resource.where(resourceType='Patient').identifier.where(type.coding.code='KVZ10').value"
+          }
         }
-      ],
-      "text": "Telematik ID des Anfragenden"
+      ]
     },
     {
       "type": "string",
-      "linkId": "180853824562",
+      "linkId": "prescription_id",
       "code": [
         {
           "system": "http://gematik.de/CS_e16A_Codes",
           "code": "prescription_id"
         }
       ],
-      "text": "Betreffendes Rezept"
+      "text": "Betreffendes Rezept (Prescription ID)",
+      "required": true,
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression", 
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%resource.identifier.where(system='https://gematik.de/fhir/erp/NamingSystem/GEM_ERP_NS_PrescriptionId').value"
+          }
+        }
+      ]
     },
     {
       "type": "string",
-      "linkId": "986476636160",
+      "linkId": "medication_name",
       "code": [
         {
           "system": "http://gematik.de/CS_e16A_Codes",
-          "code": "prescription_secret"
+          "code": "medication_name"
         }
       ],
-      "text": "Secret für das Rezept"
+      "text": "Verordnetes Medikament",
+      "required": true,
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+          "valueExpression": {
+            "language": "text/fhirpath", 
+            "expression": "%resource.entry.resource.where(resourceType='Medication').code.text"
+          }
+        }
+      ]
+    },
+    {
+      "type": "string",
+      "linkId": "prescriber_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "prescriber_name"
+        }
+      ],
+      "text": "Name des verordnenden Arztes",
+      "required": true,
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%resource.entry.resource.where(resourceType='Practitioner').name.where(use='official').prefix.join(' ') + ' ' + %resource.entry.resource.where(resourceType='Practitioner').name.where(use='official').given.join(' ') + ' ' + %resource.entry.resource.where(resourceType='Practitioner').name.where(use='official').family"
+          }
+        }
+      ]
+    },
+    {
+      "type": "string",
+      "linkId": "prescriber_lanr",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "prescriber_lanr"
+        }
+      ],
+      "text": "LANR des verordnenden Arztes",
+      "required": true,
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%resource.entry.resource.where(resourceType='Practitioner').identifier.where(type.coding.code='LANR').value"
+          }
+        }
+      ]
+    },
+    {
+      "type": "string",
+      "linkId": "organization_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "organization_name"
+        }
+      ],
+      "text": "Name der verordnenden Einrichtung",
+      "required": true,
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%resource.entry.resource.where(resourceType='Organization').name"
+          }
+        }
+      ]
+    },
+    {
+      "type": "date",
+      "linkId": "prescription_date",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "prescription_date"
+        }
+      ],
+      "text": "Verordnungsdatum",
+      "required": true,
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%resource.entry.resource.where(resourceType='MedicationRequest').authoredOn"
+          }
+        }
+      ]
     },
     {
       "type": "text",
-      "linkId": "639744786988",
+      "linkId": "change_request",
       "code": [
         {
           "system": "http://gematik.de/CS_e16A_Codes",
           "code": "change_request"
         }
       ],
-      "text": "Änderungswunsch",
-      "repeats": true
+      "text": "Detaillierte Beschreibung des Änderungswunsches",
+      "required": true,
+      "repeats": false,
+      "maxLength": 2000
+    },
+    {
+      "type": "choice",
+      "linkId": "urgency",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "urgency"
+        }
+      ],
+      "text": "Dringlichkeit der Korrektur",
+      "required": true,
+      "answerValueSet": "#urgency-vs",
+      "contained": [
+        {
+          "resourceType": "ValueSet",
+          "id": "urgency-vs",
+          "status": "active",
+          "compose": {
+            "include": [
+              {
+                "system": "http://gematik.de/CS_e16A_Urgency",
+                "concept": [
+                  {
+                    "code": "routine",
+                    "display": "Routine"
+                  },
+                  {
+                    "code": "urgent",
+                    "display": "Dringend"
+                  },
+                  {
+                    "code": "emergency",
+                    "display": "Notfall"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "string",
+      "linkId": "requester_name",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "requester_name"
+        }
+      ],
+      "text": "Name des Anfragenden (falls abweichend)",
+      "required": false
+    },
+    {
+      "type": "string",
+      "linkId": "requester_tid",
+      "code": [
+        {
+          "system": "http://gematik.de/CS_e16A_Codes",
+          "code": "requester_tid"
+        }
+      ],
+      "text": "Telematik ID des Anfragenden",
+      "required": false
     }
   ]
 }

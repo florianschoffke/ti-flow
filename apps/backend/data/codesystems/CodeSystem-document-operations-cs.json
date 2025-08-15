@@ -13,11 +13,11 @@
       "display": "Muster 16",
       "concept": [
         {
-          "code": "e16A_korrektur",
+          "code": "e16A-korrektur",
           "display": "Korrektur eines Muster 16"
         },
         {
-          "code": "e16A_neuausstellung",
+          "code": "e16A-neuausstellung",
           "display": "Neuausstellung eines Muster 16"
         }
       ]
@@ -27,7 +27,7 @@
       "display": "Muster 16D",
       "concept": [
         {
-          "code": "e16D_neuausstellung",
+          "code": "e16D-neuausstellung",
           "display": "Neuausstellung eine E-Rezeptes für eine DiGA"
         }
       ]
@@ -37,7 +37,7 @@
       "display": "Arztbrief",
       "concept": [
         {
-          "code": "arztbrief_korrektur",
+          "code": "arztbrief-korrektur",
           "display": "Korrektur eines Arztbriefes"
         }
       ]
